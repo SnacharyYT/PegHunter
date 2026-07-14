@@ -14,7 +14,7 @@
     --bg:#141922; --bg-panel:#1b2230; --card:#efe9dc; --card-dim:#e3dcc9;
     --ink:#232019; --ink-soft:#5c5548;
     --hunt-orange:#e0662e; --hunt-orange-dark:#b84f22;
-    --restock-amber:#d9962e; --checked-teal:#4c8577; --avoid-red:#b5473b;
+    --restock-amber:#d9962e; --checked-teal:#4c8577; --avoid-red:#b5473b; --fav-gold:#d9b23c;
     --line:#2c3547; --paper-line:#d8cfb6;
   }
   *{box-sizing:border-box;}
@@ -29,14 +29,7 @@
   .header-hunts{display:flex; align-items:center; gap:6px; flex-wrap:wrap;}
   .header-hunts select{background:#0f141d; color:#e9e6dd; border:1px solid #3a4356; border-radius:6px; padding:6px 8px; font-size:0.8rem; max-width:160px;}
   .header-hunts .btn-tiny{padding:6px 10px;}
-  .hunt-cta{
-    background:linear-gradient(180deg, #f0854b, var(--hunt-orange)); color:#141922; font-family:'Bebas Neue',sans-serif;
-    letter-spacing:.06em; font-size:1.25rem; border:none; border-radius:8px; padding:9px 26px; cursor:pointer;
-    box-shadow:0 3px 0 var(--hunt-orange-dark), 0 0 18px rgba(224,102,46,0.35);
-  }
-  .hunt-cta:active{transform:translateY(2px); box-shadow:0 1px 0 var(--hunt-orange-dark);}
-  .hunt-cta:disabled{opacity:0.55; cursor:not-allowed;}
-  .bomb-btn{background:none; border:1px solid var(--avoid-red); color:var(--avoid-red); border-radius:8px; font-size:1.1rem; padding:6px 12px; cursor:pointer;}
+  .bomb-btn{background:none; border:1px solid var(--avoid-red); color:var(--avoid-red); border-radius:8px; font-size:0.82rem; font-weight:700; padding:7px 14px; cursor:pointer; white-space:nowrap;}
   .donate-btn{background:var(--hunt-orange); color:#141922; font-weight:700; text-decoration:none; padding:8px 15px; border-radius:999px; font-size:0.85rem; border:2px solid var(--hunt-orange-dark); box-shadow:0 2px 0 var(--hunt-orange-dark);}
   .donate-btn:active{transform:translateY(1px); box-shadow:none;}
 
@@ -49,6 +42,7 @@
   .panel h2{font-family:'Bebas Neue',sans-serif; font-size:1.15rem; letter-spacing:.05em; color:var(--restock-amber); margin:0 0 8px; border-bottom:1px solid var(--line); padding-bottom:7px;}
   .field{margin-bottom:13px;}
   .field label{display:block; font-size:0.72rem; text-transform:uppercase; letter-spacing:.06em; color:#9aa3b5; margin-bottom:5px;}
+  .field label.plain{text-transform:none; letter-spacing:0; display:flex; align-items:center; gap:6px; cursor:pointer;}
   .field input[type=text], .field input[type=number], .field select, .field textarea{
     width:100%; padding:8px 9px; border-radius:6px; border:1px solid #3a4356; background:#0f141d; color:#e9e6dd; font-family:'Inter',sans-serif; font-size:0.86rem;
   }
@@ -58,6 +52,15 @@
   .inline-row{display:flex; gap:6px;}
   .inline-row input{flex:1;}
   .btn-tiny{background:none; border:1px solid #3a4356; color:#c9cedb; border-radius:6px; font-size:0.74rem; padding:0 10px; cursor:pointer; white-space:nowrap;}
+
+  .hunt-cta-panel{
+    display:block; width:100%; background:linear-gradient(180deg, #f0854b, var(--hunt-orange)); color:#141922; font-family:'Bebas Neue',sans-serif;
+    letter-spacing:.06em; font-size:1.3rem; border:none; border-radius:8px; padding:12px; cursor:pointer; margin-bottom:16px;
+    box-shadow:0 3px 0 var(--hunt-orange-dark), 0 0 18px rgba(224,102,46,0.3);
+  }
+  .hunt-cta-panel:active{transform:translateY(2px); box-shadow:0 1px 0 var(--hunt-orange-dark);}
+  .hunt-cta-panel:disabled{opacity:0.55; cursor:not-allowed;}
+  .hint-text{font-size:0.72rem; color:#9aa3b5; margin:-4px 0 10px;}
 
   .cat-group{margin-bottom:11px; border:1px solid var(--line); border-radius:8px; overflow:hidden;}
   .cat-head{display:flex; align-items:center; justify-content:space-between; padding:9px 11px; background:#232c3d; cursor:pointer; user-select:none;}
@@ -73,18 +76,21 @@
   .find-link{color:var(--restock-amber); font-size:0.68rem; text-decoration:none;}
   .find-link:hover{text-decoration:underline;}
 
+  .cartype-chip{display:inline-flex; align-items:center; gap:5px; background:#0f141d; border:1px solid #3a4356; border-radius:999px; padding:3px 6px 3px 10px; font-size:0.74rem; margin:0 5px 5px 0;}
+  .cartype-remove{background:none; border:none; color:#9aa3b5; cursor:pointer; font-size:0.75rem; padding:0 2px;}
+
   .btn{display:inline-block; background:var(--hunt-orange); color:#141922; font-weight:700; border:none; padding:9px 15px; border-radius:6px; cursor:pointer; font-size:0.83rem;}
   .btn.secondary{background:transparent; color:var(--hunt-orange); border:1px solid var(--hunt-orange);}
   .btn.small{padding:5px 9px; font-size:0.72rem;}
   .btn.teal{background:var(--checked-teal); color:#0d1a17;}
   .btn.red{background:transparent; color:var(--avoid-red); border:1px solid var(--avoid-red);}
+  .btn.fav-active{background:var(--fav-gold); color:#141922;}
   .btn:disabled{opacity:0.4; cursor:not-allowed;}
 
   .content{padding:18px 22px; min-width:0;}
   .content-head{display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:12px; margin-bottom:12px;}
   .content-head h2{font-family:'Bebas Neue',sans-serif; font-size:1.5rem; letter-spacing:.04em; margin:0; color:#f2eee2;}
   .content-head p{margin:2px 0 0; color:#9aa3b5; font-size:0.81rem;}
-  select#seriesFilter{width:auto; display:inline-block;}
 
   #map{height:330px; border-radius:10px; border:1px solid var(--line); margin-bottom:18px; background:#0f141d;}
   .leaflet-popup-content{font-family:'Inter',sans-serif; font-size:0.85rem; color:var(--ink);}
@@ -100,14 +106,11 @@
   .store-card .tab{position:absolute; top:-9px; left:14px; background:var(--hunt-orange); color:#141922; font-family:'IBM Plex Mono',monospace; font-size:0.6rem; padding:2px 8px; border-radius:3px; text-transform:uppercase; letter-spacing:.05em; font-weight:600;}
   .store-card h3{font-family:'Bebas Neue',sans-serif; font-size:1.28rem; margin:8px 0 2px; letter-spacing:.02em;}
   .store-card .addr{font-size:0.72rem; color:var(--ink-soft); margin-bottom:6px; word-break:break-word;}
-  .chain-toggle{font-size:0.66rem; display:flex; align-items:center; gap:5px; margin-bottom:8px; color:var(--ink-soft);}
-  .series-tags{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px;}
-  .series-tags label{font-size:0.66rem; background:var(--card-dim); padding:3px 7px; border-radius:999px; display:flex; align-items:center; gap:4px; cursor:pointer; border:1px solid var(--paper-line);}
+  .tag-badges{display:flex; gap:5px; flex-wrap:wrap; margin-bottom:8px;}
+  .tag-badge{font-size:0.64rem; background:var(--card-dim); padding:3px 8px; border-radius:999px; border:1px solid var(--paper-line); color:var(--ink-soft);}
   .stamp{position:absolute; top:10px; right:10px; width:48px; height:48px; border-radius:50%; border:2px solid var(--checked-teal); color:var(--checked-teal); display:none; align-items:center; justify-content:center; text-align:center; font-family:'IBM Plex Mono',monospace; font-size:0.49rem; font-weight:700; transform:rotate(-12deg); line-height:1.1;}
   .store-card.checked .stamp{display:flex;}
-  .row-line{display:flex; gap:8px; margin-bottom:8px; align-items:center; flex-wrap:wrap;}
-  .row-line label{font-size:0.66rem; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.04em;}
-  .row-line input[type=date]{font-family:'IBM Plex Mono',monospace; font-size:0.72rem; padding:3px 5px; border-radius:4px; border:1px solid var(--paper-line); background:#fff;}
+  .meta-line{font-size:0.7rem; color:var(--ink-soft); margin-bottom:6px;}
   .overdue{color:var(--avoid-red); font-weight:700; font-size:0.66rem; margin-left:4px;}
   textarea.notes{width:100%; min-height:46px; font-family:'Inter',sans-serif; font-size:0.76rem; padding:6px 8px; border:1px solid var(--paper-line); border-radius:4px; resize:vertical; background:#f2ede0; color:#6b644f;}
   .peg-photo{width:100%; max-height:96px; object-fit:cover; border-radius:4px; margin-bottom:8px; border:1px solid var(--paper-line); cursor:pointer;}
@@ -124,7 +127,7 @@
   .route-summary .btn-row{display:flex; gap:8px; flex-wrap:wrap;}
 
   .route-list-col{padding:18px 12px; background:var(--bg-panel);}
-  .route-list-col h2{font-family:'Bebas Neue',sans-serif; font-size:1.05rem; letter-spacing:.05em; color:var(--restock-amber); margin:0 0 10px; border-bottom:1px solid var(--line); padding-bottom:7px;}
+  .route-list-col h2{font-family:'Bebas Neue',sans-serif; font-size:1.05rem; letter-spacing:.05em; color:var(--restock-amber); margin:0 0 6px; border-bottom:1px solid var(--line); padding-bottom:7px;}
   .route-list-item{background:#0f141d; border-left:5px solid var(--hunt-orange); padding:7px 9px; border-radius:4px; margin-bottom:7px; font-size:0.76rem; cursor:pointer; display:flex; align-items:center; gap:7px;}
   .route-list-item:hover{background:#171f2c;}
   .route-list-item.dragging{opacity:0.4;}
@@ -155,14 +158,14 @@
     <button class="btn-tiny" id="saveHuntBtn">💾 Save Hunt</button>
   </div>
 
-  <button class="hunt-cta" id="huntBtn">🎯 HUNT!</button>
-
-  <button class="bomb-btn" id="bombBtn" title="Clear all saved data">💣</button>
+  <button class="bomb-btn" id="bombBtn" title="Permanently clears every saved store, note, photo, and saved hunt">💣 Clear All Data</button>
   <a class="donate-btn" id="donateBtn" href="https://paypal.me/YOUR_PAYPAL_HANDLE" target="_blank" rel="noopener">☕ Donate</a>
 </header>
 
 <main>
   <div class="panel">
+    <button class="hunt-cta-panel" id="huntBtn">🎯 HUNT!</button>
+
     <h2>Hunt Setup</h2>
     <div class="field">
       <label for="centerInput">Search center (zip, city, address, or cross streets)</label>
@@ -180,10 +183,24 @@
       <label for="homeAddress">Home address (for route start/end)</label>
       <input type="text" id="homeAddress" placeholder="Your address">
     </div>
+    <div class="field">
+      <label for="seriesFilter">Filter route/display by car type</label>
+      <select id="seriesFilter"></select>
+    </div>
+    <div class="field">
+      <label class="plain"><input type="checkbox" id="favoritesOnly"> ⭐ Only show/route favorites</label>
+    </div>
 
     <h2 style="margin-top:16px;">Store Groups</h2>
-    <p style="font-size:0.72rem;color:#9aa3b5;margin-top:-4px;">Check the chains you want, then press the big <strong>HUNT!</strong> button up top to search all of them at once (via free OpenStreetMap data).</p>
+    <p class="hint-text">Check the chains you want, then press HUNT! up top. Unchecking never deletes stores you've already found — use Remove on the card for that.</p>
     <div id="catGroups"></div>
+
+    <h2 style="margin-top:16px;">Car Types to Track</h2>
+    <div id="carTypeList"></div>
+    <div class="inline-row">
+      <input type="text" id="newCarType" placeholder="e.g. Johnny Lightning">
+      <button class="btn-tiny" id="addCarTypeBtn">+ Add</button>
+    </div>
 
     <h2 style="margin-top:16px;">Custom Store</h2>
     <div class="field"><label>Name</label><input type="text" id="customName" placeholder="e.g. Joe's Hardware"></div>
@@ -201,15 +218,6 @@
   <div class="content">
     <div class="content-head">
       <div><h2>Your Hunt Map</h2><p id="listSub">No stores yet.</p></div>
-      <div class="field" style="margin:0;min-width:170px;">
-        <label>Filter by series</label>
-        <select id="seriesFilter">
-          <option value="all">All stores</option>
-          <option value="silver">Has Silver Series</option>
-          <option value="premium">Has Premium</option>
-          <option value="matchbox">Has Matchbox</option>
-        </select>
-      </div>
     </div>
 
     <div id="map"></div>
@@ -245,11 +253,12 @@
 
   <div class="route-list-col">
     <h2>Route Order</h2>
+    <p class="hint-text">Drag ⠿ to reorder stops.</p>
     <div id="routeListPanel"></div>
   </div>
 </main>
 
-<footer>PegHunter stores everything locally in this browser — nothing is sent to a server except free map/search lookups (OpenStreetMap + OSRM). If searches keep failing, serve this file over http://localhost instead of opening it directly (see README) — that's the #1 fix.</footer>
+<footer>PegHunter stores everything locally in this browser — nothing is sent to a server except free map/search lookups (OpenStreetMap + OSRM).</footer>
 
 <div class="lightbox-overlay" id="lightboxOverlay">
   <div class="lightbox-frame">
@@ -280,9 +289,12 @@ const PRESET_GROUPS = [
   { id:'drug', label:'Drug Stores', chains:['CVS','Walgreens'] },
   { id:'auto', label:'Auto Parts', chains:["O'Reilly Auto Parts",'AutoZone','Advance Auto Parts'] },
 ];
+const DEFAULT_CAR_TYPES = ['Silver Series','Premium','Mainline','Matchbox'];
+const STREET_SUFFIXES = ['Drive','Dr','Street','St','Road','Rd','Avenue','Ave','Boulevard','Blvd','Lane','Ln','Parkway','Pkwy','Highway','Hwy','Way','Court','Ct','Circle','Cir','Trail','Trl','Place','Pl','Loop'];
 
 let stores = JSON.parse(storage.get('ph_stores') || '[]');
 let hunts = JSON.parse(storage.get('ph_hunts') || '[]');
+let carTypes = JSON.parse(storage.get('ph_cartypes') || JSON.stringify(DEFAULT_CAR_TYPES));
 let searchCenter = null, lastGeocodedCenterText = null;
 let homeCoord = null;
 let editingId = null;
@@ -292,13 +304,38 @@ let lightboxState = null;
 
 function save(){ storage.set('ph_stores', JSON.stringify(stores)); render(); }
 function saveHunts(){ storage.set('ph_hunts', JSON.stringify(hunts)); populateHuntSelect(); }
+function saveCarTypes(){ storage.set('ph_cartypes', JSON.stringify(carTypes)); }
 function esc(str){ return (str||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
 function setCenterStatus(t){ document.getElementById('centerStatus').textContent = t; }
 
 function makeStore(name, category, auto){
   return { id:'s'+Date.now()+Math.random().toString(36).slice(2,7), name, category, auto:!!auto, chain:null, osmId:null,
-    address:'', lat:null, lon:null, silver:false, premium:false, matchbox:false,
+    address:'', lat:null, lon:null, carTags:{}, favorite:false,
     lastChecked:'', restockDay:'', notes:'', photos:[], avoid:false };
+}
+
+/* ---------- naming & dedup helpers ---------- */
+function shortStreetName(street){
+  if(!street) return null;
+  const parts = street.trim().split(/\s+/);
+  if(parts.length > 1){
+    const last = parts[parts.length-1].replace('.','');
+    if(STREET_SUFFIXES.some(sfx=> sfx.toLowerCase()===last.toLowerCase())) return parts.slice(0,-1).join(' ');
+  }
+  return street;
+}
+function buildStoreName(chain, tags){
+  const street = tags['addr:street'];
+  return street ? `${chain}: ${shortStreetName(street)}` : chain;
+}
+function haversineMiles(a,b){
+  const R=3958.8, dLat=(b.lat-a.lat)*Math.PI/180, dLon=(b.lon-a.lon)*Math.PI/180;
+  const la1=a.lat*Math.PI/180, la2=b.lat*Math.PI/180;
+  const h=Math.sin(dLat/2)**2 + Math.cos(la1)*Math.cos(la2)*Math.sin(dLon/2)**2;
+  return R*2*Math.asin(Math.sqrt(h));
+}
+function isDuplicateLocation(chain, lat, lon){
+  return stores.some(s=> s.chain===chain && s.lat!=null && s.lon!=null && haversineMiles({lat,lon},{lat:s.lat,lon:s.lon}) < 0.07);
 }
 
 /* ---------- migration for stores saved by earlier versions ---------- */
@@ -308,6 +345,14 @@ function migrateStores(){
     if(s.photo && (!s.photos || !s.photos.length)){ s.photos = [{date:s.lastChecked||'', dataUrl:s.photo}]; delete s.photo; changed = true; }
     if(!s.photos) { s.photos = []; changed = true; }
     if(s.preset && !s.chain){ s.chain = s.name; s.auto = true; changed = true; }
+    if(!s.carTags){
+      s.carTags = {};
+      if(s.silver!==undefined){ s.carTags['Silver Series'] = !!s.silver; delete s.silver; changed = true; }
+      if(s.premium!==undefined){ s.carTags['Premium'] = !!s.premium; delete s.premium; changed = true; }
+      if(s.matchbox!==undefined){ s.carTags['Matchbox'] = !!s.matchbox; delete s.matchbox; changed = true; }
+      changed = true;
+    }
+    if(s.favorite===undefined){ s.favorite = false; changed = true; }
   });
   if(changed) storage.set('ph_stores', JSON.stringify(stores));
   stores.filter(s=> (s.lat==null || s.lon==null) && s.address).forEach(async s=>{
@@ -316,7 +361,7 @@ function migrateStores(){
   });
 }
 
-/* ---------- request throttling (respect free-service fair use, avoid burst failures) ---------- */
+/* ---------- request throttling ---------- */
 let lastRequestTime = 0;
 async function throttle(){
   const now = Date.now();
@@ -347,7 +392,6 @@ async function ensureSearchCenter(){
     return null;
   }catch(e){ console.error('Geocode failed:', e); setCenterStatus('Lookup failed — check connection (see console)'); return null; }
 }
-
 async function geocodeAddress(addr){
   try{
     await throttle();
@@ -396,10 +440,13 @@ async function searchChain(chain, groupLabel){
       const osmId = `${el.type}/${el.id}`;
       if(stores.some(s=> s.osmId === osmId)) return;
       const tags = el.tags || {};
+      const rawName = tags.name || chain;
+      if(/garden cent(er|re)/i.test(rawName) || tags.shop==='garden_centre') return;
+      if(isDuplicateLocation(chain, lat, lon)) return;
       const line1 = [tags['addr:housenumber'], tags['addr:street']].filter(Boolean).join(' ');
       const line2 = [tags['addr:city'], tags['addr:state']].filter(Boolean).join(', ');
       const address = [line1, line2, tags['addr:postcode']].filter(Boolean).join(', ') || `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
-      const s = makeStore(tags.name || chain, groupLabel, true);
+      const s = makeStore(buildStoreName(chain, tags), groupLabel, true);
       s.chain = chain; s.address = address; s.lat = lat; s.lon = lon; s.osmId = osmId;
       stores.push(s); added++;
     });
@@ -407,11 +454,9 @@ async function searchChain(chain, groupLabel){
     save();
   }catch(e){
     console.error('Search failed for', chain, e);
-    if(rowStatus) rowStatus.textContent = 'failed (see console) — try serving via localhost';
+    if(rowStatus) rowStatus.textContent = 'failed (see console)';
   }
 }
-function removeChain(chain){ stores = stores.filter(s=> !(s.auto && s.chain===chain)); save(); }
-function isChainChecked(chain){ const cb = document.querySelector(`input[data-chain="${CSS.escape(chain)}"]`); return cb ? cb.checked : true; }
 
 /* ---------- build left-panel groups ---------- */
 const catGroupsEl = document.getElementById('catGroups');
@@ -448,9 +493,7 @@ PRESET_GROUPS.forEach(group=>{
   wrap.querySelector('.cat-select-all').addEventListener('click', e=> e.stopPropagation());
   wrap.querySelector('.cat-select-all').addEventListener('change', (e)=>{
     const checked = e.target.checked;
-    wrap.querySelectorAll('input[data-chain]').forEach(cb=>{
-      if(cb.checked !== checked){ cb.checked = checked; if(!checked) removeChain(cb.dataset.chain); }
-    });
+    wrap.querySelectorAll('input[data-chain]').forEach(cb=> cb.checked = checked);
   });
   catGroupsEl.appendChild(wrap);
 
@@ -462,13 +505,9 @@ PRESET_GROUPS.forEach(group=>{
     });
   });
   wrap.querySelectorAll('input[data-chain]').forEach(cb=>{
-    cb.addEventListener('change', ()=>{
-      if(!cb.checked) removeChain(cb.dataset.chain);
-      syncCategoryMasterState(wrap);
-    });
+    cb.addEventListener('change', ()=> syncCategoryMasterState(wrap));
   });
 });
-
 function syncCategoryMasterState(wrap){
   const boxes = Array.from(wrap.querySelectorAll('input[data-chain]'));
   const allChecked = boxes.every(b=>b.checked), noneChecked = boxes.every(b=>!b.checked);
@@ -500,6 +539,30 @@ document.getElementById('huntBtn').addEventListener('click', async ()=>{
   btn.disabled = false;
 });
 
+/* ---------- car types ---------- */
+function populateSeriesFilter(){
+  const sel = document.getElementById('seriesFilter');
+  const prev = sel.value || 'all';
+  sel.innerHTML = '<option value="all">All stores</option>' + carTypes.map(t=> `<option value="${esc(t)}">Has ${esc(t)}</option>`).join('');
+  if([...sel.options].some(o=>o.value===prev)) sel.value = prev;
+}
+function renderCarTypes(){
+  const el = document.getElementById('carTypeList');
+  el.innerHTML = carTypes.map((t,i)=> `<span class="cartype-chip">${esc(t)} <button data-idx="${i}" class="cartype-remove" title="Remove type">✕</button></span>`).join('');
+  el.querySelectorAll('.cartype-remove').forEach(btn=> btn.addEventListener('click', ()=>{
+    carTypes.splice(parseInt(btn.dataset.idx,10),1);
+    saveCarTypes(); renderCarTypes(); populateSeriesFilter(); render();
+  }));
+  populateSeriesFilter();
+}
+document.getElementById('addCarTypeBtn').addEventListener('click', ()=>{
+  const val = document.getElementById('newCarType').value.trim();
+  if(!val || carTypes.includes(val)) return;
+  carTypes.push(val); saveCarTypes(); document.getElementById('newCarType').value=''; renderCarTypes();
+});
+document.getElementById('seriesFilter').addEventListener('change', render);
+document.getElementById('favoritesOnly').addEventListener('change', render);
+
 /* ---------- custom store ---------- */
 document.getElementById('addCustomBtn').addEventListener('click', async ()=>{
   const name = document.getElementById('customName').value.trim();
@@ -523,7 +586,6 @@ document.getElementById('homeAddress').addEventListener('change', async ()=>{
   homeCoord = c ? { lat:c.lat, lon:c.lon, address:addr } : null;
   updateMap();
 });
-document.getElementById('seriesFilter').addEventListener('change', render);
 
 /* ---------- bomb: full wipe ---------- */
 document.getElementById('bombBtn').addEventListener('click', ()=>{
@@ -561,15 +623,14 @@ document.getElementById('saveHuntBtn').addEventListener('click', ()=>{
   const name = prompt('Name this hunt (e.g. "Full Force Weekend" or "Quick Dollar Run"):');
   if(!name) return;
   const checkedChains = Array.from(document.querySelectorAll('input[data-chain]:checked')).map(cb=> cb.dataset.chain);
-  const avoidChains = [...new Set(stores.filter(s=> s.avoid && s.chain).map(s=> s.chain))];
   hunts.push({
     id:'h'+Date.now(), name,
     centerText: document.getElementById('centerInput').value.trim(),
     radius: document.getElementById('radius').value,
     homeAddress: document.getElementById('homeAddress').value.trim(),
     chains: checkedChains,
-    avoidChains,
     seriesFilter: document.getElementById('seriesFilter').value,
+    favoritesOnly: document.getElementById('favoritesOnly').checked,
     createdAt: new Date().toISOString().slice(0,10)
   });
   saveHunts();
@@ -583,13 +644,14 @@ document.getElementById('loadHuntBtn').addEventListener('click', async ()=>{
   document.getElementById('radius').value = hunt.radius || 10;
   document.getElementById('radiusVal').textContent = (hunt.radius||10) + ' mi';
   document.getElementById('homeAddress').value = hunt.homeAddress || '';
-  document.getElementById('seriesFilter').value = hunt.seriesFilter || 'all';
+  document.getElementById('favoritesOnly').checked = !!hunt.favoritesOnly;
   document.getElementById('homeAddress').dispatchEvent(new Event('change'));
   await ensureSearchCenter();
+  populateSeriesFilter();
+  document.getElementById('seriesFilter').value = hunt.seriesFilter || 'all';
   document.querySelectorAll('.cat-group').forEach(g=> g.classList.add('open'));
   document.querySelectorAll('input[data-chain]').forEach(cb=>{ cb.checked = hunt.chains.includes(cb.dataset.chain); });
   document.querySelectorAll('.cat-group').forEach(wrap=> syncCategoryMasterState(wrap));
-  (hunt.avoidChains||[]).forEach(chain=>{ stores.filter(s=> s.chain===chain).forEach(s=> s.avoid = true); });
   render();
   alert('Hunt loaded — press the HUNT! button up top to run the searches.');
 });
@@ -640,7 +702,7 @@ function updateMap(){
     if(s.lat==null || s.lon==null) return;
     const color = s.avoid ? '#b5473b' : (s.lastChecked ? '#4c8577' : '#e0662e');
     const marker = L.circleMarker([s.lat,s.lon], { radius:9, color:'#141922', weight:2, fillColor:color, fillOpacity:0.95 }).addTo(markersLayer);
-    marker.bindPopup(`<strong>${esc(s.name)}</strong><br>${esc(s.category||'')}<br>${esc(s.address||'')}${s.lastChecked?`<br>Last checked: ${s.lastChecked}`:''}<br><a href="#" onclick="scrollToCard('${s.id}');return false;">View details ↓</a>`);
+    marker.bindPopup(`<strong>${esc(s.name)}</strong>${s.favorite?' ⭐':''}<br>${esc(s.category||'')}<br>${esc(s.address||'')}${s.lastChecked?`<br>Last hunted: ${s.lastChecked}`:''}<br><a href="#" onclick="scrollToCard('${s.id}');return false;">View details ↓</a>`);
     pts.push([s.lat,s.lon]);
   });
   if(searchCenter){
@@ -684,9 +746,10 @@ async function drawRoute(points){
 function daysOverdue(store){ if(!store.restockDay) return false; return store.restockDay < new Date().toISOString().slice(0,10); }
 function statusColor(s){ return s.avoid ? '#b5473b' : (s.lastChecked ? '#4c8577' : '#e0662e'); }
 function passesFilter(store){
+  if(document.getElementById('favoritesOnly').checked && !store.favorite) return false;
   const f = document.getElementById('seriesFilter').value;
   if(f==='all') return true;
-  return !!store[f];
+  return !!(store.carTags && store.carTags[f]);
 }
 
 function populateRouteSelects(){
@@ -704,9 +767,7 @@ function buildRouteListItem(label, color, id, draggable, orderIdx){
   div.className = 'route-list-item';
   div.style.borderLeftColor = color;
   div.innerHTML = `${draggable?'<span class="drag-handle">⠿</span>':''}<span class="rli-label">${esc(label)}</span>`;
-  if(id){
-    div.addEventListener('click', (e)=>{ if(!e.target.classList.contains('drag-handle')) scrollToCard(id); });
-  }
+  if(id) div.addEventListener('click', (e)=>{ if(!e.target.classList.contains('drag-handle')) scrollToCard(id); });
   if(draggable){
     div.draggable = true;
     div.dataset.orderIdx = orderIdx;
@@ -759,6 +820,11 @@ function render(){
         <span class="tab">${esc(store.category||'store')}</span>
         <div class="field"><label>Name</label><input type="text" id="editName_${store.id}" value="${esc(store.name)}"></div>
         <div class="field"><label>Address</label><input type="text" id="editAddr_${store.id}" value="${esc(store.address)}"></div>
+        <div class="field"><label>Last hunted</label><input type="date" id="editLastChecked_${store.id}" value="${store.lastChecked||''}"></div>
+        <div class="field"><label>Next restock</label><input type="date" id="editRestock_${store.id}" value="${store.restockDay||''}"></div>
+        <div class="field"><label>Car types found here</label>
+          ${carTypes.map(t=>`<label style="font-size:.75rem;display:flex;align-items:center;gap:5px;margin-bottom:4px;"><input type="checkbox" data-edit-cartype="${esc(t)}" ${store.carTags&&store.carTags[t]?'checked':''}> ${esc(t)}</label>`).join('')}
+        </div>
         <div class="field"><label>Notes</label><textarea id="editNotes_${store.id}">${esc(store.notes)}</textarea></div>
         <div class="card-actions">
           <button class="btn small teal" data-role="saveEdit">Save</button>
@@ -769,7 +835,11 @@ function render(){
         store.name = document.getElementById(`editName_${store.id}`).value.trim() || store.name;
         const newAddr = document.getElementById(`editAddr_${store.id}`).value.trim();
         if(newAddr !== store.address){ store.address = newAddr; if(newAddr){ const c = await geocodeAddress(newAddr); if(c){ store.lat=c.lat; store.lon=c.lon; } } }
+        store.lastChecked = document.getElementById(`editLastChecked_${store.id}`).value;
+        store.restockDay = document.getElementById(`editRestock_${store.id}`).value;
         store.notes = document.getElementById(`editNotes_${store.id}`).value;
+        store.carTags = store.carTags || {};
+        card.querySelectorAll('[data-edit-cartype]').forEach(cb=>{ store.carTags[cb.dataset.editCartype] = cb.checked; });
         editingId = null; save();
       });
       q('[data-role=cancelEdit]').addEventListener('click', ()=>{ editingId = null; render(); });
@@ -777,23 +847,20 @@ function render(){
     }
 
     const lastPhoto = store.photos && store.photos.length ? store.photos[store.photos.length-1] : null;
+    const activeTags = carTypes.filter(t=> store.carTags && store.carTags[t]);
     card.innerHTML = `
       <span class="tab">${esc(store.category || 'store')}</span>
       <div class="stamp">HUNTED<br>${store.lastChecked||''}</div>
-      <h3>${esc(store.name)}</h3>
+      <h3>${store.favorite?'⭐ ':''}${esc(store.name)}</h3>
       <div class="addr">${esc(store.address) || '<em>no address yet</em>'}</div>
-      ${store.chain ? `<label class="chain-toggle"><input type="checkbox" data-role="chainToggle" ${isChainChecked(store.chain)?'checked':''}> Find all ${esc(store.chain)} nearby</label>` : ''}
-      <div class="series-tags">
-        <label><input type="checkbox" data-role="silver" ${store.silver?'checked':''}> Silver Series</label>
-        <label><input type="checkbox" data-role="premium" ${store.premium?'checked':''}> Premium</label>
-        <label><input type="checkbox" data-role="matchbox" ${store.matchbox?'checked':''}> Matchbox</label>
-      </div>
-      <div class="row-line"><label>Last checked</label><input type="date" data-role="lastChecked" value="${store.lastChecked||''}"></div>
-      <div class="row-line"><label>Next restock</label><input type="date" data-role="restockDay" value="${store.restockDay||''}">${daysOverdue(store)?'<span class="overdue">⚠ check now</span>':''}</div>
+      ${activeTags.length ? `<div class="tag-badges">${activeTags.map(t=>`<span class="tag-badge">${esc(t)}</span>`).join('')}</div>` : ''}
+      <div class="meta-line">Last hunted: ${store.lastChecked || 'never'}</div>
+      <div class="meta-line">Next restock: ${store.restockDay || 'not set'}${daysOverdue(store)?'<span class="overdue">⚠ check now</span>':''}</div>
       ${lastPhoto?`<img class="peg-photo" data-role="photoThumb" src="${lastPhoto.dataUrl}">`:''}
       <textarea class="notes" data-role="notesDisplay" readonly placeholder="No notes yet — click Edit to add some.">${esc(store.notes)}</textarea>
       <div class="card-actions">
-        <button class="btn small teal" data-role="markVisited">✓ Mark visited today</button>
+        <button class="btn small teal" data-role="markVisited">🎯 Hunted!</button>
+        <button class="btn small ${store.favorite?'fav-active':''}" data-role="favorite">${store.favorite?'⭐ Favorited':'☆ Favorite'}</button>
         <label class="upload">📷 Peg photo<input type="file" accept="image/*" data-role="photo" style="display:none;"></label>
         <button class="btn small ${store.avoid?'':'red'}" data-role="avoid">${store.avoid?'Un-avoid':'Avoid this store'}</button>
         <button class="btn small secondary" data-role="editBtn">✏️ Edit</button>
@@ -801,26 +868,14 @@ function render(){
       </div>`;
     grid.appendChild(card);
 
-    if(store.chain){
-      q('[data-role=chainToggle]').addEventListener('change', e=>{
-        const cb = document.querySelector(`input[data-chain="${CSS.escape(store.chain)}"]`);
-        if(cb) cb.checked = e.target.checked;
-        if(e.target.checked) searchChain(store.chain, store.category); else removeChain(store.chain);
-      });
-    }
-    q('[data-role=silver]').addEventListener('change', e=>{ store.silver=e.target.checked; save(); });
-    q('[data-role=premium]').addEventListener('change', e=>{ store.premium=e.target.checked; save(); });
-    q('[data-role=matchbox]').addEventListener('change', e=>{ store.matchbox=e.target.checked; save(); });
-    q('[data-role=lastChecked]').addEventListener('change', e=>{ store.lastChecked=e.target.value; save(); });
-    q('[data-role=restockDay]').addEventListener('change', e=>{ store.restockDay=e.target.value; save(); });
     q('[data-role=markVisited]').addEventListener('click', ()=>{ store.lastChecked=new Date().toISOString().slice(0,10); save(); });
+    q('[data-role=favorite]').addEventListener('click', ()=>{ store.favorite=!store.favorite; save(); });
     q('[data-role=avoid]').addEventListener('click', ()=>{ store.avoid=!store.avoid; save(); });
     q('[data-role=editBtn]').addEventListener('click', ()=>{ editingId = store.id; render(); });
     q('[data-role=remove]').addEventListener('click', ()=>{
-      if(store.auto && store.chain && !stores.some(s=> s.id!==store.id && s.chain===store.chain)){
-        const cb = document.querySelector(`input[data-chain="${CSS.escape(store.chain)}"]`); if(cb) cb.checked=false;
+      if(confirm(`Remove ${store.name} from your list? This deletes its notes and photos too.`)){
+        stores = stores.filter(s=> s.id!==store.id); save();
       }
-      stores = stores.filter(s=> s.id!==store.id); save();
     });
     q('[data-role=photo]').addEventListener('change', e=>{
       const file=e.target.files[0]; if(!file) return;
@@ -859,12 +914,6 @@ document.getElementById('lightboxPrev').addEventListener('click', ()=>{ lightbox
 document.getElementById('lightboxNext').addEventListener('click', ()=>{ lightboxState.index++; renderLightbox(); });
 
 /* ---------- route generation ---------- */
-function haversineMiles(a,b){
-  const R=3958.8, dLat=(b.lat-a.lat)*Math.PI/180, dLon=(b.lon-a.lon)*Math.PI/180;
-  const la1=a.lat*Math.PI/180, la2=b.lat*Math.PI/180;
-  const h=Math.sin(dLat/2)**2 + Math.cos(la1)*Math.cos(la2)*Math.sin(dLon/2)**2;
-  return R*2*Math.asin(Math.sqrt(h));
-}
 function orderStops(start, stops){
   const withCoords = stops.filter(s=> s.lat!=null && s.lon!=null);
   const withoutCoords = stops.filter(s=> s.lat==null || s.lon==null);
@@ -945,6 +994,7 @@ document.getElementById('openMapsBtn').addEventListener('click', ()=>{
 initMap();
 migrateStores();
 populateHuntSelect();
+renderCarTypes();
 render();
 setTimeout(syncChainCheckboxes, 0);
 </script>
