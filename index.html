@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PegHunter — Track your Hot Wheels route</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎯</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  :root{
+    --bg:#141922; --bg-panel:#1b2230; --card:#efe9dc; --card-dim:#e3dcc9;
+    --ink:#232019; --ink-soft:#5c5548;
+    --hunt-orange:#e0662e; --hunt-orange-dark:#b84f22;
+    --restock-amber:#d9962e; --checked-teal:#4c8577; --avoid-red:#b5473b;
+    --line:#2c3547; --paper-line:#d8cfb6;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--bg); color:#e9e6dd; font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased;}
+  .display{font-family:'Bebas Neue',sans-serif; letter-spacing:0.03em;}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+
+  header{display:flex; justify-content:space-between; align-items:center; padding:12px 22px; border-bottom:1px solid var(--line); flex-wrap:wrap; gap:12px; row-gap:10px;}
+  .brand{display:flex; align-items:baseline; gap:10px;}
+  .brand h1{font-family:'Bebas Neue',sans-serif; font-size:1.9rem; margin:0; color:var(--hunt-orange); line-height:1;}
+  .brand span{color:#9aa3b5; font-size:0.78rem;}
+  .header-hunts{display:flex; align-items:center; gap:6px; flex-wrap:wrap;}
+  .header-hunts select{background:#0f141d; color:#e9e6dd; border:1px solid #3a4356; border-radius:6px; padding:6px 8px; font-size:0.8rem; max-width:160px;}
+  .header-hunts .btn-tiny{padding:6px 10px;}
+  .hunt-cta{
+    background:linear-gradient(180deg, #f0854b, var(--hunt-orange)); color:#141922; font-family:'Bebas Neue',sans-serif;
+    letter-spacing:.06em; font-size:1.25rem; border:none; border-radius:8px; padding:9px 26px; cursor:pointer;
+    box-shadow:0 3px 0 var(--hunt-orange-dark), 0 0 18px rgba(224,102,46,0.35);
+  }
+  .hunt-cta:active{transform:translateY(2px); box-shadow:0 1px 0 var(--hunt-orange-dark);}
+  .hunt-cta:disabled{opacity:0.55; cursor:not-allowed;}
+  .bomb-btn{background:none; border:1px solid var(--avoid-red); color:var(--avoid-red); border-radius:8px; font-size:1.1rem; padding:6px 12px; cursor:pointer;}
+  .donate-btn{background:var(--hunt-orange); color:#141922; font-weight:700; text-decoration:none; padding:8px 15px; border-radius:999px; font-size:0.85rem; border:2px solid var(--hunt-orange-dark); box-shadow:0 2px 0 var(--hunt-orange-dark);}
+  .donate-btn:active{transform:translateY(1px); box-shadow:none;}
+
+  main{display:grid; grid-template-columns:300px 1fr 230px; min-height:calc(100vh - 78px);}
+  @media (max-width: 1100px){ main{grid-template-columns:280px 1fr;} .route-list-col{display:none;} }
+  @media (max-width: 820px){ main{grid-template-columns:1fr;} }
+
+  .panel{background:var(--bg-panel); padding:18px; border-right:1px solid var(--line);}
+  @media (max-width: 820px){ .panel{border-right:none; border-bottom:1px solid var(--line);} }
+  .panel h2{font-family:'Bebas Neue',sans-serif; font-size:1.15rem; letter-spacing:.05em; color:var(--restock-amber); margin:0 0 8px; border-bottom:1px solid var(--line); padding-bottom:7px;}
+  .field{margin-bottom:13px;}
+  .field label{display:block; font-size:0.72rem; text-transform:uppercase; letter-spacing:.06em; color:#9aa3b5; margin-bottom:5px;}
+  .field input[type=text], .field input[type=number], .field select, .field textarea{
+    width:100%; padding:8px 9px; border-radius:6px; border:1px solid #3a4356; background:#0f141d; color:#e9e6dd; font-family:'Inter',sans-serif; font-size:0.86rem;
+  }
+  .field input[type=range]{width:100%;}
+  .radius-val{font-family:'IBM Plex Mono',monospace; color:var(--hunt-orange); font-weight:600;}
+  .status-text{font-size:0.68rem; color:#9aa3b5; margin-top:4px; display:block; min-height:1em;}
+  .inline-row{display:flex; gap:6px;}
+  .inline-row input{flex:1;}
+  .btn-tiny{background:none; border:1px solid #3a4356; color:#c9cedb; border-radius:6px; font-size:0.74rem; padding:0 10px; cursor:pointer; white-space:nowrap;}
+
+  .cat-group{margin-bottom:11px; border:1px solid var(--line); border-radius:8px; overflow:hidden;}
+  .cat-head{display:flex; align-items:center; justify-content:space-between; padding:9px 11px; background:#232c3d; cursor:pointer; user-select:none;}
+  .cat-head-label{display:flex; align-items:center; gap:8px;}
+  .cat-head strong{font-size:0.84rem;}
+  .mini-refresh{background:none; border:1px solid #3a4356; color:#9aa3b5; border-radius:4px; font-size:0.68rem; padding:2px 6px; cursor:pointer;}
+  .chain-list{padding:8px 11px; display:none;}
+  .cat-group.open .chain-list{display:block;}
+  .chain-row{display:flex; align-items:center; justify-content:space-between; gap:8px; padding:6px 0; font-size:0.81rem; border-bottom:1px dashed #2c3547; flex-wrap:wrap;}
+  .chain-row:last-child{border-bottom:none;}
+  .chain-row label{display:flex; align-items:center; gap:8px; cursor:pointer;}
+  .chain-status{font-size:0.66rem; color:#9aa3b5;}
+  .find-link{color:var(--restock-amber); font-size:0.68rem; text-decoration:none;}
+  .find-link:hover{text-decoration:underline;}
+
+  .btn{display:inline-block; background:var(--hunt-orange); color:#141922; font-weight:700; border:none; padding:9px 15px; border-radius:6px; cursor:pointer; font-size:0.83rem;}
+  .btn.secondary{background:transparent; color:var(--hunt-orange); border:1px solid var(--hunt-orange);}
+  .btn.small{padding:5px 9px; font-size:0.72rem;}
+  .btn.teal{background:var(--checked-teal); color:#0d1a17;}
+  .btn.red{background:transparent; color:var(--avoid-red); border:1px solid var(--avoid-red);}
+  .btn:disabled{opacity:0.4; cursor:not-allowed;}
+
+  .content{padding:18px 22px; min-width:0;}
+  .content-head{display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:12px; margin-bottom:12px;}
+  .content-head h2{font-family:'Bebas Neue',sans-serif; font-size:1.5rem; letter-spacing:.04em; margin:0; color:#f2eee2;}
+  .content-head p{margin:2px 0 0; color:#9aa3b5; font-size:0.81rem;}
+  select#seriesFilter{width:auto; display:inline-block;}
+
+  #map{height:330px; border-radius:10px; border:1px solid var(--line); margin-bottom:18px; background:#0f141d;}
+  .leaflet-popup-content{font-family:'Inter',sans-serif; font-size:0.85rem; color:var(--ink);}
+  .leaflet-popup-content a{color:var(--hunt-orange-dark); font-weight:600;}
+  .route-num-badge{background:var(--hunt-orange); color:#141922; border-radius:50%; width:22px; height:22px; display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono',monospace; font-weight:700; font-size:0.7rem; border:2px solid #141922;}
+
+  .empty{border:1px dashed #3a4356; border-radius:10px; padding:34px 20px; text-align:center; color:#9aa3b5;}
+  .card-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(280px,1fr)); gap:15px;}
+
+  .store-card{background:var(--card); color:var(--ink); border-radius:4px; position:relative; padding:15px 15px 13px; box-shadow:0 3px 0 rgba(0,0,0,0.35); border-left:6px solid var(--hunt-orange); scroll-margin-top:20px; transition:opacity .15s;}
+  .store-card.avoided{border-left-color:var(--avoid-red); opacity:0.55;}
+  .store-card.filtered-dim{opacity:0.25;}
+  .store-card .tab{position:absolute; top:-9px; left:14px; background:var(--hunt-orange); color:#141922; font-family:'IBM Plex Mono',monospace; font-size:0.6rem; padding:2px 8px; border-radius:3px; text-transform:uppercase; letter-spacing:.05em; font-weight:600;}
+  .store-card h3{font-family:'Bebas Neue',sans-serif; font-size:1.28rem; margin:8px 0 2px; letter-spacing:.02em;}
+  .store-card .addr{font-size:0.72rem; color:var(--ink-soft); margin-bottom:6px; word-break:break-word;}
+  .chain-toggle{font-size:0.66rem; display:flex; align-items:center; gap:5px; margin-bottom:8px; color:var(--ink-soft);}
+  .series-tags{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px;}
+  .series-tags label{font-size:0.66rem; background:var(--card-dim); padding:3px 7px; border-radius:999px; display:flex; align-items:center; gap:4px; cursor:pointer; border:1px solid var(--paper-line);}
+  .stamp{position:absolute; top:10px; right:10px; width:48px; height:48px; border-radius:50%; border:2px solid var(--checked-teal); color:var(--checked-teal); display:none; align-items:center; justify-content:center; text-align:center; font-family:'IBM Plex Mono',monospace; font-size:0.49rem; font-weight:700; transform:rotate(-12deg); line-height:1.1;}
+  .store-card.checked .stamp{display:flex;}
+  .row-line{display:flex; gap:8px; margin-bottom:8px; align-items:center; flex-wrap:wrap;}
+  .row-line label{font-size:0.66rem; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.04em;}
+  .row-line input[type=date]{font-family:'IBM Plex Mono',monospace; font-size:0.72rem; padding:3px 5px; border-radius:4px; border:1px solid var(--paper-line); background:#fff;}
+  .overdue{color:var(--avoid-red); font-weight:700; font-size:0.66rem; margin-left:4px;}
+  textarea.notes{width:100%; min-height:46px; font-family:'Inter',sans-serif; font-size:0.76rem; padding:6px 8px; border:1px solid var(--paper-line); border-radius:4px; resize:vertical; background:#f2ede0; color:#6b644f;}
+  .peg-photo{width:100%; max-height:96px; object-fit:cover; border-radius:4px; margin-bottom:8px; border:1px solid var(--paper-line); cursor:pointer;}
+  .card-actions{display:flex; gap:6px; flex-wrap:wrap; margin-top:10px;}
+  .card-actions label.upload{background:transparent; color:var(--ink-soft); border:1px solid var(--paper-line); border-radius:6px; padding:5px 9px; font-size:0.72rem; cursor:pointer;}
+
+  .route-bar{position:sticky; bottom:0; margin-top:20px; background:#1b2230; border:1px solid var(--line); border-radius:10px; padding:15px 17px; display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:14px;}
+  .route-controls{display:flex; gap:14px; flex-wrap:wrap;}
+  .rc-field{min-width:175px;}
+  .rc-field label{display:block; font-size:0.66rem; text-transform:uppercase; letter-spacing:.05em; color:#9aa3b5; margin-bottom:4px;}
+  .rc-field select, .rc-field input[type=text]{width:100%; padding:7px 8px; border-radius:6px; border:1px solid #3a4356; background:#0f141d; color:#e9e6dd; font-size:0.81rem;}
+  .route-summary{display:flex; flex-direction:column; align-items:flex-end; gap:8px;}
+  .route-summary .count{color:#9aa3b5; font-size:0.76rem; text-align:right;}
+  .route-summary .btn-row{display:flex; gap:8px; flex-wrap:wrap;}
+
+  .route-list-col{padding:18px 12px; background:var(--bg-panel);}
+  .route-list-col h2{font-family:'Bebas Neue',sans-serif; font-size:1.05rem; letter-spacing:.05em; color:var(--restock-amber); margin:0 0 10px; border-bottom:1px solid var(--line); padding-bottom:7px;}
+  .route-list-item{background:#0f141d; border-left:5px solid var(--hunt-orange); padding:7px 9px; border-radius:4px; margin-bottom:7px; font-size:0.76rem; cursor:pointer; display:flex; align-items:center; gap:7px;}
+  .route-list-item:hover{background:#171f2c;}
+  .route-list-item.dragging{opacity:0.4;}
+  .drag-handle{cursor:grab; color:#6a7488; font-size:0.9rem;}
+  .rli-label{flex:1;}
+
+  footer{text-align:center; padding:22px 10px 32px; color:#5c6579; font-size:0.72rem;}
+
+  .lightbox-overlay{position:fixed; inset:0; background:rgba(8,10,14,0.9); display:none; align-items:center; justify-content:center; z-index:9999; padding:20px;}
+  .lightbox-frame{background:#1b2230; border-radius:10px; border:6px solid #0f141d; max-width:640px; width:100%; overflow:hidden; box-shadow:0 10px 40px rgba(0,0,0,0.6);}
+  .lightbox-titlebar{display:flex; justify-content:space-between; align-items:center; padding:8px 14px; background:#0f141d; color:#e9e6dd; font-size:0.8rem;}
+  .lightbox-titlebar button{background:none; border:none; color:#e9e6dd; font-size:1rem; cursor:pointer;}
+  .lightbox-frame img{width:100%; max-height:60vh; object-fit:contain; background:#000; display:block;}
+  .lightbox-nav{display:flex; justify-content:space-between; align-items:center; padding:10px 14px; background:#0f141d;}
+  .lightbox-nav button{background:var(--hunt-orange); color:#141922; border:none; border-radius:6px; padding:6px 12px; font-weight:700; cursor:pointer; font-size:0.8rem;}
+  .lightbox-nav button:disabled{opacity:0.3; cursor:not-allowed;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand"><h1>🎯 PegHunter</h1><span>store tracker &amp; route builder for the hunt</span></div>
+
+  <div class="header-hunts">
+    <select id="huntSelect"><option value="">— saved hunts —</option></select>
+    <button class="btn-tiny" id="loadHuntBtn">Load</button>
+    <button class="btn-tiny" id="deleteHuntBtn">Delete</button>
+    <button class="btn-tiny" id="saveHuntBtn">💾 Save Hunt</button>
+  </div>
+
+  <button class="hunt-cta" id="huntBtn">🎯 HUNT!</button>
+
+  <button class="bomb-btn" id="bombBtn" title="Clear all saved data">💣</button>
+  <a class="donate-btn" id="donateBtn" href="https://paypal.me/YOUR_PAYPAL_HANDLE" target="_blank" rel="noopener">☕ Donate</a>
+</header>
+
+<main>
+  <div class="panel">
+    <h2>Hunt Setup</h2>
+    <div class="field">
+      <label for="centerInput">Search center (zip, city, address, or cross streets)</label>
+      <div class="inline-row">
+        <input type="text" id="centerInput" placeholder="e.g. 35749 or Huntsville, AL">
+        <button class="btn-tiny" id="pickCenterBtn">📍 Pick on map</button>
+      </div>
+      <span class="status-text" id="centerStatus"></span>
+    </div>
+    <div class="field">
+      <label for="radius">Search radius <span class="radius-val" id="radiusVal">10 mi</span></label>
+      <input type="range" id="radius" min="1" max="50" value="10">
+    </div>
+    <div class="field">
+      <label for="homeAddress">Home address (for route start/end)</label>
+      <input type="text" id="homeAddress" placeholder="Your address">
+    </div>
+
+    <h2 style="margin-top:16px;">Store Groups</h2>
+    <p style="font-size:0.72rem;color:#9aa3b5;margin-top:-4px;">Check the chains you want, then press the big <strong>HUNT!</strong> button up top to search all of them at once (via free OpenStreetMap data).</p>
+    <div id="catGroups"></div>
+
+    <h2 style="margin-top:16px;">Custom Store</h2>
+    <div class="field"><label>Name</label><input type="text" id="customName" placeholder="e.g. Joe's Hardware"></div>
+    <div class="field">
+      <label>Category</label>
+      <select id="customCat">
+        <option>Gas Station</option><option>Hardware Store</option><option>Toy Store</option>
+        <option>Grocery</option><option>Dollar Store</option><option>Drug Store</option><option>Auto Parts</option><option>Other</option>
+      </select>
+    </div>
+    <div class="field"><label>Address</label><input type="text" id="customAddr" placeholder="Street, City, State"></div>
+    <button class="btn" id="addCustomBtn">+ Add Custom Store</button>
+  </div>
+
+  <div class="content">
+    <div class="content-head">
+      <div><h2>Your Hunt Map</h2><p id="listSub">No stores yet.</p></div>
+      <div class="field" style="margin:0;min-width:170px;">
+        <label>Filter by series</label>
+        <select id="seriesFilter">
+          <option value="all">All stores</option>
+          <option value="silver">Has Silver Series</option>
+          <option value="premium">Has Premium</option>
+          <option value="matchbox">Has Matchbox</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="map"></div>
+
+    <div id="cardGrid" class="card-grid"></div>
+    <div id="emptyState" class="empty">Nothing here yet. Check some store groups on the left, then press HUNT! up top.</div>
+
+    <div class="route-bar">
+      <div class="route-controls">
+        <div class="rc-field">
+          <label>Start</label>
+          <select id="startSelect"></select>
+          <input type="text" id="startAddrInput" placeholder="Enter start address" style="display:none;margin-top:6px;">
+        </div>
+        <div class="rc-field">
+          <label>End</label>
+          <select id="endSelect"></select>
+          <input type="text" id="endAddrInput" placeholder="Enter end address" style="display:none;margin-top:6px;">
+        </div>
+        <div class="rc-field" style="align-self:flex-end;">
+          <button class="btn small secondary" id="clearBoardBtn">🧹 Clear board</button>
+        </div>
+      </div>
+      <div class="route-summary">
+        <span class="count" id="routeCount">0 stops ready</span>
+        <div class="btn-row">
+          <button class="btn secondary" id="generateRouteBtn">🧭 Generate Route</button>
+          <button class="btn teal" id="openMapsBtn" disabled>📲 Open in Google Maps</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="route-list-col">
+    <h2>Route Order</h2>
+    <div id="routeListPanel"></div>
+  </div>
+</main>
+
+<footer>PegHunter stores everything locally in this browser — nothing is sent to a server except free map/search lookups (OpenStreetMap + OSRM). If searches keep failing, serve this file over http://localhost instead of opening it directly (see README) — that's the #1 fix.</footer>
+
+<div class="lightbox-overlay" id="lightboxOverlay">
+  <div class="lightbox-frame">
+    <div class="lightbox-titlebar">
+      <span id="lightboxDate" class="mono"></span>
+      <button id="lightboxClose">✕</button>
+    </div>
+    <img id="lightboxImg" src="">
+    <div class="lightbox-nav">
+      <button id="lightboxPrev">‹ Prev</button>
+      <span id="lightboxCounter" class="mono"></span>
+      <button id="lightboxNext">Next ›</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------- storage ---------- */
+const memoryStore = {};
+const storage = {
+  get(key){ try{ const v=localStorage.getItem(key); return v===null?null:v; } catch(e){ return memoryStore.hasOwnProperty(key)?memoryStore[key]:null; } },
+  set(key,val){ try{ localStorage.setItem(key,val); } catch(e){ memoryStore[key]=val; } }
+};
+
+const PRESET_GROUPS = [
+  { id:'grocery', label:'Grocery / Big Box', chains:['Walmart','Target','Albertsons'] },
+  { id:'dollar', label:'Dollar Stores', chains:['Dollar Tree','Dollar General','Family Dollar'] },
+  { id:'drug', label:'Drug Stores', chains:['CVS','Walgreens'] },
+  { id:'auto', label:'Auto Parts', chains:["O'Reilly Auto Parts",'AutoZone','Advance Auto Parts'] },
+];
+
+let stores = JSON.parse(storage.get('ph_stores') || '[]');
+let hunts = JSON.parse(storage.get('ph_hunts') || '[]');
+let searchCenter = null, lastGeocodedCenterText = null;
+let homeCoord = null;
+let editingId = null;
+let currentRoute = null;
+let pickingCenter = false;
+let lightboxState = null;
+
+function save(){ storage.set('ph_stores', JSON.stringify(stores)); render(); }
+function saveHunts(){ storage.set('ph_hunts', JSON.stringify(hunts)); populateHuntSelect(); }
+function esc(str){ return (str||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+function setCenterStatus(t){ document.getElementById('centerStatus').textContent = t; }
+
+function makeStore(name, category, auto){
+  return { id:'s'+Date.now()+Math.random().toString(36).slice(2,7), name, category, auto:!!auto, chain:null, osmId:null,
+    address:'', lat:null, lon:null, silver:false, premium:false, matchbox:false,
+    lastChecked:'', restockDay:'', notes:'', photos:[], avoid:false };
+}
+
+/* ---------- migration for stores saved by earlier versions ---------- */
+function migrateStores(){
+  let changed = false;
+  stores.forEach(s=>{
+    if(s.photo && (!s.photos || !s.photos.length)){ s.photos = [{date:s.lastChecked||'', dataUrl:s.photo}]; delete s.photo; changed = true; }
+    if(!s.photos) { s.photos = []; changed = true; }
+    if(s.preset && !s.chain){ s.chain = s.name; s.auto = true; changed = true; }
+  });
+  if(changed) storage.set('ph_stores', JSON.stringify(stores));
+  stores.filter(s=> (s.lat==null || s.lon==null) && s.address).forEach(async s=>{
+    const c = await geocodeAddress(s.address);
+    if(c){ s.lat = c.lat; s.lon = c.lon; save(); }
+  });
+}
+
+/* ---------- request throttling (respect free-service fair use, avoid burst failures) ---------- */
+let lastRequestTime = 0;
+async function throttle(){
+  const now = Date.now();
+  const wait = Math.max(0, 1100 - (now - lastRequestTime));
+  if(wait > 0) await new Promise(r=> setTimeout(r, wait));
+  lastRequestTime = Date.now();
+}
+
+/* ---------- geocoding (free, no key: OpenStreetMap Nominatim) ---------- */
+async function ensureSearchCenter(){
+  const text = document.getElementById('centerInput').value.trim();
+  if(!text && !searchCenter){ alert('Enter a zip/city/address, or use "Pick on map".'); return null; }
+  if(searchCenter && (!text || lastGeocodedCenterText === text)) return searchCenter;
+  setCenterStatus('Locating…');
+  try{
+    await throttle();
+    const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(text)}&format=json&limit=1`);
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const data = await res.json();
+    if(data && data[0]){
+      searchCenter = { lat:parseFloat(data[0].lat), lon:parseFloat(data[0].lon) };
+      lastGeocodedCenterText = text;
+      setCenterStatus('Located ✓');
+      updateMap();
+      return searchCenter;
+    }
+    setCenterStatus('Not found — try a nearby city or zip');
+    return null;
+  }catch(e){ console.error('Geocode failed:', e); setCenterStatus('Lookup failed — check connection (see console)'); return null; }
+}
+
+async function geocodeAddress(addr){
+  try{
+    await throttle();
+    const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(addr)}&format=json&limit=1`);
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const data = await res.json();
+    if(data && data[0]) return { lat:parseFloat(data[0].lat), lon:parseFloat(data[0].lon) };
+  }catch(e){ console.error('Geocode failed:', e); }
+  return null;
+}
+
+/* ---------- store discovery (free, no key: Overpass / OpenStreetMap, with mirror fallback) ---------- */
+const OVERPASS_ENDPOINTS = [
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.kumi.systems/api/interpreter',
+  'https://overpass.openstreetmap.ru/api/interpreter'
+];
+async function overpassFetch(query){
+  let lastErr;
+  for(const endpoint of OVERPASS_ENDPOINTS){
+    try{
+      await throttle();
+      const res = await fetch(endpoint + '?data=' + encodeURIComponent(query));
+      if(!res.ok) throw new Error('HTTP ' + res.status + ' from ' + endpoint);
+      return await res.json();
+    }catch(e){ console.error('Overpass endpoint failed:', endpoint, e); lastErr = e; }
+  }
+  throw lastErr || new Error('All Overpass endpoints failed');
+}
+
+async function searchChain(chain, groupLabel){
+  const center = await ensureSearchCenter();
+  const rowStatus = document.querySelector(`.chain-row[data-chain-row="${CSS.escape(chain)}"] .chain-status`);
+  if(!center){ if(rowStatus) rowStatus.textContent='need a location'; return; }
+  if(rowStatus) rowStatus.textContent = 'Searching…';
+  const radiusMeters = Math.round(parseFloat(document.getElementById('radius').value) * 1609.34);
+  const escaped = chain.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const query = `[out:json][timeout:25];(nwr["shop"]["name"~"${escaped}",i](around:${radiusMeters},${center.lat},${center.lon}););out center tags;`;
+  try{
+    const data = await overpassFetch(query);
+    let added = 0;
+    (data.elements||[]).forEach(el=>{
+      const lat = el.lat ?? (el.center && el.center.lat);
+      const lon = el.lon ?? (el.center && el.center.lon);
+      if(lat==null || lon==null) return;
+      const osmId = `${el.type}/${el.id}`;
+      if(stores.some(s=> s.osmId === osmId)) return;
+      const tags = el.tags || {};
+      const line1 = [tags['addr:housenumber'], tags['addr:street']].filter(Boolean).join(' ');
+      const line2 = [tags['addr:city'], tags['addr:state']].filter(Boolean).join(', ');
+      const address = [line1, line2, tags['addr:postcode']].filter(Boolean).join(', ') || `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+      const s = makeStore(tags.name || chain, groupLabel, true);
+      s.chain = chain; s.address = address; s.lat = lat; s.lon = lon; s.osmId = osmId;
+      stores.push(s); added++;
+    });
+    if(rowStatus) rowStatus.textContent = added ? `${added} found` : 'none found nearby';
+    save();
+  }catch(e){
+    console.error('Search failed for', chain, e);
+    if(rowStatus) rowStatus.textContent = 'failed (see console) — try serving via localhost';
+  }
+}
+function removeChain(chain){ stores = stores.filter(s=> !(s.auto && s.chain===chain)); save(); }
+function isChainChecked(chain){ const cb = document.querySelector(`input[data-chain="${CSS.escape(chain)}"]`); return cb ? cb.checked : true; }
+
+/* ---------- build left-panel groups ---------- */
+const catGroupsEl = document.getElementById('catGroups');
+PRESET_GROUPS.forEach(group=>{
+  const wrap = document.createElement('div');
+  wrap.className = 'cat-group';
+  wrap.innerHTML = `
+    <div class="cat-head">
+      <label class="cat-head-label">
+        <input type="checkbox" class="cat-select-all" data-group="${group.id}">
+        <strong>${group.label}</strong>
+      </label>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <button class="mini-refresh" data-group="${group.id}" title="Search checked chains in this group right now">🔍</button>
+        <span class="mono toggle-arrow" style="font-size:.75rem;color:#9aa3b5;">▸</span>
+      </div>
+    </div>
+    <div class="chain-list">
+      ${group.chains.map(chain=>`
+        <div class="chain-row" data-chain-row="${chain}">
+          <label><input type="checkbox" data-chain="${chain}" data-group-label="${group.label}"> ${chain}</label>
+          <span class="chain-status mono"></span>
+          <a class="find-link" href="#" data-manual="${chain}">manual ↗</a>
+        </div>`).join('')}
+    </div>`;
+  wrap.querySelector('.cat-head').addEventListener('click', (e)=>{
+    if(e.target.closest('.mini-refresh') || e.target.closest('.cat-select-all')) return;
+    wrap.classList.toggle('open');
+  });
+  wrap.querySelector('.mini-refresh').addEventListener('click', (e)=>{
+    e.stopPropagation();
+    wrap.querySelectorAll('input[data-chain]:checked').forEach(cb=> searchChain(cb.dataset.chain, cb.dataset.groupLabel));
+  });
+  wrap.querySelector('.cat-select-all').addEventListener('click', e=> e.stopPropagation());
+  wrap.querySelector('.cat-select-all').addEventListener('change', (e)=>{
+    const checked = e.target.checked;
+    wrap.querySelectorAll('input[data-chain]').forEach(cb=>{
+      if(cb.checked !== checked){ cb.checked = checked; if(!checked) removeChain(cb.dataset.chain); }
+    });
+  });
+  catGroupsEl.appendChild(wrap);
+
+  wrap.querySelectorAll('[data-manual]').forEach(link=>{
+    link.addEventListener('click', (e)=>{
+      e.preventDefault();
+      const q = encodeURIComponent(`${link.dataset.manual} near ${document.getElementById('centerInput').value||''}`);
+      window.open(`https://www.google.com/maps/search/?api=1&query=${q}`, '_blank');
+    });
+  });
+  wrap.querySelectorAll('input[data-chain]').forEach(cb=>{
+    cb.addEventListener('change', ()=>{
+      if(!cb.checked) removeChain(cb.dataset.chain);
+      syncCategoryMasterState(wrap);
+    });
+  });
+});
+
+function syncCategoryMasterState(wrap){
+  const boxes = Array.from(wrap.querySelectorAll('input[data-chain]'));
+  const allChecked = boxes.every(b=>b.checked), noneChecked = boxes.every(b=>!b.checked);
+  const master = wrap.querySelector('.cat-select-all');
+  master.checked = allChecked;
+  master.indeterminate = !allChecked && !noneChecked;
+}
+function syncChainCheckboxes(){
+  document.querySelectorAll('.cat-group').forEach(wrap=>{
+    wrap.querySelectorAll('input[data-chain]').forEach(cb=>{ cb.checked = stores.some(s=> s.chain===cb.dataset.chain); });
+    syncCategoryMasterState(wrap);
+  });
+}
+
+/* ---------- HUNT! button: runs every checked chain, one at a time ---------- */
+document.getElementById('huntBtn').addEventListener('click', async ()=>{
+  const center = await ensureSearchCenter();
+  if(!center) return;
+  const checked = Array.from(document.querySelectorAll('input[data-chain]:checked'));
+  if(checked.length===0){ alert('Check at least one store type on the left first.'); return; }
+  const btn = document.getElementById('huntBtn');
+  const original = btn.textContent;
+  btn.disabled = true;
+  for(let i=0;i<checked.length;i++){
+    btn.textContent = `Hunting… ${i+1}/${checked.length}`;
+    await searchChain(checked[i].dataset.chain, checked[i].dataset.groupLabel);
+  }
+  btn.textContent = original;
+  btn.disabled = false;
+});
+
+/* ---------- custom store ---------- */
+document.getElementById('addCustomBtn').addEventListener('click', async ()=>{
+  const name = document.getElementById('customName').value.trim();
+  if(!name) return;
+  const cat = document.getElementById('customCat').value;
+  const addr = document.getElementById('customAddr').value.trim();
+  const s = makeStore(name, cat, false);
+  s.address = addr;
+  if(addr){ const c = await geocodeAddress(addr); if(c){ s.lat=c.lat; s.lon=c.lon; } }
+  stores.push(s);
+  document.getElementById('customName').value=''; document.getElementById('customAddr').value='';
+  save();
+});
+
+document.getElementById('radius').addEventListener('input', ()=>{ document.getElementById('radiusVal').textContent = document.getElementById('radius').value + ' mi'; });
+document.getElementById('centerInput').addEventListener('change', ()=> ensureSearchCenter());
+document.getElementById('homeAddress').addEventListener('change', async ()=>{
+  const addr = document.getElementById('homeAddress').value.trim();
+  if(!addr){ homeCoord = null; updateMap(); return; }
+  const c = await geocodeAddress(addr);
+  homeCoord = c ? { lat:c.lat, lon:c.lon, address:addr } : null;
+  updateMap();
+});
+document.getElementById('seriesFilter').addEventListener('change', render);
+
+/* ---------- bomb: full wipe ---------- */
+document.getElementById('bombBtn').addEventListener('click', ()=>{
+  if(confirm('💣 This permanently deletes every saved store, note, photo, and saved hunt on this device. Are you sure?')){
+    stores = []; hunts = [];
+    storage.set('ph_stores', '[]'); storage.set('ph_hunts', '[]');
+    document.querySelectorAll('.chain-list input[type=checkbox]').forEach(cb=>{ cb.checked=false; });
+    document.querySelectorAll('.cat-select-all').forEach(cb=>{ cb.checked=false; cb.indeterminate=false; });
+    currentRoute = null;
+    if(routeLayer) routeLayer.clearLayers();
+    document.getElementById('openMapsBtn').disabled = true;
+    populateHuntSelect();
+    render();
+  }
+});
+
+/* ---------- clear board: route settings only ---------- */
+document.getElementById('clearBoardBtn').addEventListener('click', ()=>{
+  currentRoute = null;
+  if(routeLayer) routeLayer.clearLayers();
+  document.getElementById('startAddrInput').value=''; document.getElementById('startAddrInput').style.display='none';
+  document.getElementById('endAddrInput').value=''; document.getElementById('endAddrInput').style.display='none';
+  document.getElementById('openMapsBtn').disabled = true;
+  populateRouteSelects();
+  renderRouteList();
+  updateMap();
+});
+
+/* ---------- saved hunts ---------- */
+function populateHuntSelect(){
+  const sel = document.getElementById('huntSelect');
+  sel.innerHTML = '<option value="">— saved hunts —</option>' + hunts.map(h=>`<option value="${h.id}">${esc(h.name)}</option>`).join('');
+}
+document.getElementById('saveHuntBtn').addEventListener('click', ()=>{
+  const name = prompt('Name this hunt (e.g. "Full Force Weekend" or "Quick Dollar Run"):');
+  if(!name) return;
+  const checkedChains = Array.from(document.querySelectorAll('input[data-chain]:checked')).map(cb=> cb.dataset.chain);
+  const avoidChains = [...new Set(stores.filter(s=> s.avoid && s.chain).map(s=> s.chain))];
+  hunts.push({
+    id:'h'+Date.now(), name,
+    centerText: document.getElementById('centerInput').value.trim(),
+    radius: document.getElementById('radius').value,
+    homeAddress: document.getElementById('homeAddress').value.trim(),
+    chains: checkedChains,
+    avoidChains,
+    seriesFilter: document.getElementById('seriesFilter').value,
+    createdAt: new Date().toISOString().slice(0,10)
+  });
+  saveHunts();
+  alert(`Saved "${name}". Press HUNT! after loading it to run the searches.`);
+});
+document.getElementById('loadHuntBtn').addEventListener('click', async ()=>{
+  const id = document.getElementById('huntSelect').value;
+  const hunt = hunts.find(h=> h.id===id);
+  if(!hunt){ alert('Pick a saved hunt first.'); return; }
+  document.getElementById('centerInput').value = hunt.centerText || '';
+  document.getElementById('radius').value = hunt.radius || 10;
+  document.getElementById('radiusVal').textContent = (hunt.radius||10) + ' mi';
+  document.getElementById('homeAddress').value = hunt.homeAddress || '';
+  document.getElementById('seriesFilter').value = hunt.seriesFilter || 'all';
+  document.getElementById('homeAddress').dispatchEvent(new Event('change'));
+  await ensureSearchCenter();
+  document.querySelectorAll('.cat-group').forEach(g=> g.classList.add('open'));
+  document.querySelectorAll('input[data-chain]').forEach(cb=>{ cb.checked = hunt.chains.includes(cb.dataset.chain); });
+  document.querySelectorAll('.cat-group').forEach(wrap=> syncCategoryMasterState(wrap));
+  (hunt.avoidChains||[]).forEach(chain=>{ stores.filter(s=> s.chain===chain).forEach(s=> s.avoid = true); });
+  render();
+  alert('Hunt loaded — press the HUNT! button up top to run the searches.');
+});
+document.getElementById('deleteHuntBtn').addEventListener('click', ()=>{
+  const id = document.getElementById('huntSelect').value;
+  if(!id) return;
+  if(confirm('Delete this saved hunt?')){ hunts = hunts.filter(h=> h.id!==id); saveHunts(); }
+});
+
+/* ---------- map ---------- */
+let map, markersLayer, routeLayer;
+function emojiIcon(emoji, size){
+  return L.divIcon({ html:`<div style="font-size:${size||22}px;line-height:1;">${emoji}</div>`, className:'', iconSize:[size||22,size||22], iconAnchor:[(size||22)/2,(size||22)/2] });
+}
+function initMap(){
+  map = L.map('map', { scrollWheelZoom:false }).setView([39.8283,-98.5795], 4);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution:'&copy; OpenStreetMap contributors', maxZoom:19 }).addTo(map);
+  markersLayer = L.layerGroup().addTo(map);
+  routeLayer = L.layerGroup().addTo(map);
+  map.on('click', async (e)=>{
+    if(!pickingCenter) return;
+    pickingCenter = false;
+    document.getElementById('pickCenterBtn').textContent = '📍 Pick on map';
+    searchCenter = { lat:e.latlng.lat, lon:e.latlng.lng };
+    lastGeocodedCenterText = null;
+    setCenterStatus('Locating label…');
+    try{
+      await throttle();
+      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${e.latlng.lat}&lon=${e.latlng.lng}&format=json`);
+      const data = await res.json();
+      document.getElementById('centerInput').value = data.display_name ? data.display_name.split(',').slice(0,3).join(',') : `${e.latlng.lat.toFixed(4)}, ${e.latlng.lng.toFixed(4)}`;
+    }catch(err){
+      document.getElementById('centerInput').value = `${e.latlng.lat.toFixed(4)}, ${e.latlng.lng.toFixed(4)}`;
+    }
+    setCenterStatus('Center set ✓');
+    updateMap();
+  });
+}
+document.getElementById('pickCenterBtn').addEventListener('click', ()=>{
+  pickingCenter = !pickingCenter;
+  document.getElementById('pickCenterBtn').textContent = pickingCenter ? 'Click the map…' : '📍 Pick on map';
+});
+
+function updateMap(){
+  markersLayer.clearLayers();
+  const pts = [];
+  stores.forEach(s=>{
+    if(s.lat==null || s.lon==null) return;
+    const color = s.avoid ? '#b5473b' : (s.lastChecked ? '#4c8577' : '#e0662e');
+    const marker = L.circleMarker([s.lat,s.lon], { radius:9, color:'#141922', weight:2, fillColor:color, fillOpacity:0.95 }).addTo(markersLayer);
+    marker.bindPopup(`<strong>${esc(s.name)}</strong><br>${esc(s.category||'')}<br>${esc(s.address||'')}${s.lastChecked?`<br>Last checked: ${s.lastChecked}`:''}<br><a href="#" onclick="scrollToCard('${s.id}');return false;">View details ↓</a>`);
+    pts.push([s.lat,s.lon]);
+  });
+  if(searchCenter){
+    L.marker([searchCenter.lat, searchCenter.lon], { icon: emojiIcon('🎯') }).addTo(markersLayer).bindPopup('Search center');
+    pts.push([searchCenter.lat, searchCenter.lon]);
+  }
+  if(homeCoord){
+    L.marker([homeCoord.lat, homeCoord.lon], { icon: emojiIcon('🏠') }).addTo(markersLayer).bindPopup('🏠 Home');
+    pts.push([homeCoord.lat, homeCoord.lon]);
+  }
+  if(pts.length) map.fitBounds(pts, { padding:[30,30], maxZoom:13 });
+}
+function scrollToCard(id){ const el = document.getElementById('card-'+id); if(el) el.scrollIntoView({behavior:'smooth', block:'center'}); }
+window.scrollToCard = scrollToCard;
+
+/* ---------- route drawing (free OSRM demo routing, falls back to straight lines) ---------- */
+async function drawRoute(points){
+  routeLayer.clearLayers();
+  const withCoords = points.filter(p=> p.lat!=null && p.lon!=null);
+  if(withCoords.length < 2) return;
+  withCoords.forEach((p,i)=>{
+    L.marker([p.lat,p.lon], { icon: L.divIcon({ html:`<div class="route-num-badge">${i===0?'S':(i===withCoords.length-1?'E':i)}</div>`, className:'', iconSize:[22,22], iconAnchor:[11,11] }) }).addTo(routeLayer);
+  });
+  try{
+    const coordStr = withCoords.map(p=> `${p.lon},${p.lat}`).join(';');
+    await throttle();
+    const res = await fetch(`https://router.project-osrm.org/route/v1/driving/${coordStr}?overview=full&geometries=geojson`);
+    const data = await res.json();
+    if(data.routes && data.routes[0]){
+      const latlngs = data.routes[0].geometry.coordinates.map(c=> [c[1], c[0]]);
+      L.polyline(latlngs, { color:'#e0662e', weight:4, opacity:0.85 }).addTo(routeLayer);
+    } else throw new Error('no route from OSRM');
+  }catch(e){
+    console.error('OSRM route failed, drawing straight lines instead:', e);
+    L.polyline(withCoords.map(p=>[p.lat,p.lon]), { color:'#e0662e', weight:3, opacity:0.7, dashArray:'6 6' }).addTo(routeLayer);
+  }
+  map.fitBounds(withCoords.map(p=>[p.lat,p.lon]), { padding:[30,30] });
+}
+
+/* ---------- rendering ---------- */
+function daysOverdue(store){ if(!store.restockDay) return false; return store.restockDay < new Date().toISOString().slice(0,10); }
+function statusColor(s){ return s.avoid ? '#b5473b' : (s.lastChecked ? '#4c8577' : '#e0662e'); }
+function passesFilter(store){
+  const f = document.getElementById('seriesFilter').value;
+  if(f==='all') return true;
+  return !!store[f];
+}
+
+function populateRouteSelects(){
+  const opts = stores.filter(s=>!s.avoid).map(s=> `<option value="store:${s.id}">${esc(s.name)} (${esc(s.category||'')})</option>`).join('');
+  const startSel = document.getElementById('startSelect'), endSel = document.getElementById('endSelect');
+  const prevStart = startSel.value || 'current', prevEnd = endSel.value || 'loop';
+  startSel.innerHTML = `<option value="current">📡 My current location</option><option value="home">🏠 Home</option>${opts}<option value="custom">Custom address…</option>`;
+  endSel.innerHTML = `<option value="loop">🔁 Loop back to start</option><option value="home">🏠 Home</option>${opts}<option value="custom">Custom address…</option>`;
+  if([...startSel.options].some(o=>o.value===prevStart)) startSel.value = prevStart;
+  if([...endSel.options].some(o=>o.value===prevEnd)) endSel.value = prevEnd;
+}
+
+function buildRouteListItem(label, color, id, draggable, orderIdx){
+  const div = document.createElement('div');
+  div.className = 'route-list-item';
+  div.style.borderLeftColor = color;
+  div.innerHTML = `${draggable?'<span class="drag-handle">⠿</span>':''}<span class="rli-label">${esc(label)}</span>`;
+  if(id){
+    div.addEventListener('click', (e)=>{ if(!e.target.classList.contains('drag-handle')) scrollToCard(id); });
+  }
+  if(draggable){
+    div.draggable = true;
+    div.dataset.orderIdx = orderIdx;
+    div.addEventListener('dragstart', e=>{ e.dataTransfer.setData('text/plain', String(orderIdx)); div.classList.add('dragging'); });
+    div.addEventListener('dragend', ()=> div.classList.remove('dragging'));
+    div.addEventListener('dragover', e=> e.preventDefault());
+    div.addEventListener('drop', async e=>{
+      e.preventDefault();
+      const fromIdx = parseInt(e.dataTransfer.getData('text/plain'), 10);
+      const toIdx = parseInt(div.dataset.orderIdx, 10);
+      if(isNaN(fromIdx) || fromIdx===toIdx || !currentRoute) return;
+      const arr = currentRoute.ordered;
+      const [moved] = arr.splice(fromIdx,1);
+      arr.splice(toIdx,0,moved);
+      renderRouteList();
+      await drawRoute([currentRoute.start, ...currentRoute.ordered, currentRoute.end]);
+    });
+  }
+  return div;
+}
+function renderRouteList(){
+  const el = document.getElementById('routeListPanel');
+  el.innerHTML = '';
+  if(currentRoute){
+    el.appendChild(buildRouteListItem('Start: ' + (currentRoute.start.address||'Start'), '#9aa3b5', null, false));
+    currentRoute.ordered.forEach((s,i)=> el.appendChild(buildRouteListItem(`${i+1}. ${s.name}`, statusColor(s), s.id, true, i)));
+    el.appendChild(buildRouteListItem('End: ' + (currentRoute.end.address||'End'), '#9aa3b5', null, false));
+  } else {
+    const list = stores.filter(s=>!s.avoid);
+    if(!list.length) el.innerHTML = '<p style="font-size:0.76rem;color:#9aa3b5;">No stores yet.</p>';
+    else list.forEach(s=> el.appendChild(buildRouteListItem(s.name, statusColor(s), s.id, false)));
+  }
+}
+
+function render(){
+  const grid = document.getElementById('cardGrid');
+  const empty = document.getElementById('emptyState');
+  grid.innerHTML = '';
+  empty.style.display = stores.length ? 'none' : 'block';
+  document.getElementById('listSub').textContent = stores.length ? `${stores.length} store${stores.length===1?'':'s'} on your list` : 'No stores yet.';
+
+  stores.forEach(store=>{
+    const card = document.createElement('div');
+    card.id = 'card-'+store.id;
+    card.className = 'store-card' + (store.avoid?' avoided':'') + (store.lastChecked?' checked':'') + (!passesFilter(store)?' filtered-dim':'');
+    const q = sel => card.querySelector(sel);
+
+    if(editingId === store.id){
+      card.innerHTML = `
+        <span class="tab">${esc(store.category||'store')}</span>
+        <div class="field"><label>Name</label><input type="text" id="editName_${store.id}" value="${esc(store.name)}"></div>
+        <div class="field"><label>Address</label><input type="text" id="editAddr_${store.id}" value="${esc(store.address)}"></div>
+        <div class="field"><label>Notes</label><textarea id="editNotes_${store.id}">${esc(store.notes)}</textarea></div>
+        <div class="card-actions">
+          <button class="btn small teal" data-role="saveEdit">Save</button>
+          <button class="btn small secondary" data-role="cancelEdit">Cancel</button>
+        </div>`;
+      grid.appendChild(card);
+      q('[data-role=saveEdit]').addEventListener('click', async ()=>{
+        store.name = document.getElementById(`editName_${store.id}`).value.trim() || store.name;
+        const newAddr = document.getElementById(`editAddr_${store.id}`).value.trim();
+        if(newAddr !== store.address){ store.address = newAddr; if(newAddr){ const c = await geocodeAddress(newAddr); if(c){ store.lat=c.lat; store.lon=c.lon; } } }
+        store.notes = document.getElementById(`editNotes_${store.id}`).value;
+        editingId = null; save();
+      });
+      q('[data-role=cancelEdit]').addEventListener('click', ()=>{ editingId = null; render(); });
+      return;
+    }
+
+    const lastPhoto = store.photos && store.photos.length ? store.photos[store.photos.length-1] : null;
+    card.innerHTML = `
+      <span class="tab">${esc(store.category || 'store')}</span>
+      <div class="stamp">HUNTED<br>${store.lastChecked||''}</div>
+      <h3>${esc(store.name)}</h3>
+      <div class="addr">${esc(store.address) || '<em>no address yet</em>'}</div>
+      ${store.chain ? `<label class="chain-toggle"><input type="checkbox" data-role="chainToggle" ${isChainChecked(store.chain)?'checked':''}> Find all ${esc(store.chain)} nearby</label>` : ''}
+      <div class="series-tags">
+        <label><input type="checkbox" data-role="silver" ${store.silver?'checked':''}> Silver Series</label>
+        <label><input type="checkbox" data-role="premium" ${store.premium?'checked':''}> Premium</label>
+        <label><input type="checkbox" data-role="matchbox" ${store.matchbox?'checked':''}> Matchbox</label>
+      </div>
+      <div class="row-line"><label>Last checked</label><input type="date" data-role="lastChecked" value="${store.lastChecked||''}"></div>
+      <div class="row-line"><label>Next restock</label><input type="date" data-role="restockDay" value="${store.restockDay||''}">${daysOverdue(store)?'<span class="overdue">⚠ check now</span>':''}</div>
+      ${lastPhoto?`<img class="peg-photo" data-role="photoThumb" src="${lastPhoto.dataUrl}">`:''}
+      <textarea class="notes" data-role="notesDisplay" readonly placeholder="No notes yet — click Edit to add some.">${esc(store.notes)}</textarea>
+      <div class="card-actions">
+        <button class="btn small teal" data-role="markVisited">✓ Mark visited today</button>
+        <label class="upload">📷 Peg photo<input type="file" accept="image/*" data-role="photo" style="display:none;"></label>
+        <button class="btn small ${store.avoid?'':'red'}" data-role="avoid">${store.avoid?'Un-avoid':'Avoid this store'}</button>
+        <button class="btn small secondary" data-role="editBtn">✏️ Edit</button>
+        <button class="btn small secondary" data-role="remove">Remove</button>
+      </div>`;
+    grid.appendChild(card);
+
+    if(store.chain){
+      q('[data-role=chainToggle]').addEventListener('change', e=>{
+        const cb = document.querySelector(`input[data-chain="${CSS.escape(store.chain)}"]`);
+        if(cb) cb.checked = e.target.checked;
+        if(e.target.checked) searchChain(store.chain, store.category); else removeChain(store.chain);
+      });
+    }
+    q('[data-role=silver]').addEventListener('change', e=>{ store.silver=e.target.checked; save(); });
+    q('[data-role=premium]').addEventListener('change', e=>{ store.premium=e.target.checked; save(); });
+    q('[data-role=matchbox]').addEventListener('change', e=>{ store.matchbox=e.target.checked; save(); });
+    q('[data-role=lastChecked]').addEventListener('change', e=>{ store.lastChecked=e.target.value; save(); });
+    q('[data-role=restockDay]').addEventListener('change', e=>{ store.restockDay=e.target.value; save(); });
+    q('[data-role=markVisited]').addEventListener('click', ()=>{ store.lastChecked=new Date().toISOString().slice(0,10); save(); });
+    q('[data-role=avoid]').addEventListener('click', ()=>{ store.avoid=!store.avoid; save(); });
+    q('[data-role=editBtn]').addEventListener('click', ()=>{ editingId = store.id; render(); });
+    q('[data-role=remove]').addEventListener('click', ()=>{
+      if(store.auto && store.chain && !stores.some(s=> s.id!==store.id && s.chain===store.chain)){
+        const cb = document.querySelector(`input[data-chain="${CSS.escape(store.chain)}"]`); if(cb) cb.checked=false;
+      }
+      stores = stores.filter(s=> s.id!==store.id); save();
+    });
+    q('[data-role=photo]').addEventListener('change', e=>{
+      const file=e.target.files[0]; if(!file) return;
+      const reader=new FileReader();
+      reader.onload=()=>{ store.photos.push({ date:new Date().toISOString().slice(0,10), dataUrl:reader.result }); save(); };
+      reader.readAsDataURL(file);
+    });
+    const thumb = q('[data-role=photoThumb]');
+    if(thumb) thumb.addEventListener('click', ()=> openLightbox(store.id, store.photos.length-1));
+  });
+
+  populateRouteSelects();
+  updateMap();
+  renderRouteList();
+  const routable = stores.filter(s=> !s.avoid && s.address);
+  document.getElementById('routeCount').textContent = `${routable.length} stop${routable.length===1?'':'s'} available for the route`;
+}
+
+/* ---------- photo lightbox ---------- */
+function openLightbox(storeId, index){ lightboxState = { storeId, index }; renderLightbox(); document.getElementById('lightboxOverlay').style.display='flex'; }
+function renderLightbox(){
+  const store = stores.find(s=> s.id===lightboxState.storeId);
+  if(!store || !store.photos.length){ document.getElementById('lightboxOverlay').style.display='none'; return; }
+  const idx = Math.max(0, Math.min(lightboxState.index, store.photos.length-1));
+  lightboxState.index = idx;
+  const photo = store.photos[idx];
+  document.getElementById('lightboxImg').src = photo.dataUrl;
+  document.getElementById('lightboxDate').textContent = `${store.name} — ${photo.date || 'undated'}`;
+  document.getElementById('lightboxCounter').textContent = `${idx+1} / ${store.photos.length}`;
+  document.getElementById('lightboxPrev').disabled = idx===0;
+  document.getElementById('lightboxNext').disabled = idx===store.photos.length-1;
+}
+document.getElementById('lightboxClose').addEventListener('click', ()=>{ document.getElementById('lightboxOverlay').style.display='none'; });
+document.getElementById('lightboxOverlay').addEventListener('click', (e)=>{ if(e.target.id==='lightboxOverlay') document.getElementById('lightboxOverlay').style.display='none'; });
+document.getElementById('lightboxPrev').addEventListener('click', ()=>{ lightboxState.index--; renderLightbox(); });
+document.getElementById('lightboxNext').addEventListener('click', ()=>{ lightboxState.index++; renderLightbox(); });
+
+/* ---------- route generation ---------- */
+function haversineMiles(a,b){
+  const R=3958.8, dLat=(b.lat-a.lat)*Math.PI/180, dLon=(b.lon-a.lon)*Math.PI/180;
+  const la1=a.lat*Math.PI/180, la2=b.lat*Math.PI/180;
+  const h=Math.sin(dLat/2)**2 + Math.cos(la1)*Math.cos(la2)*Math.sin(dLon/2)**2;
+  return R*2*Math.asin(Math.sqrt(h));
+}
+function orderStops(start, stops){
+  const withCoords = stops.filter(s=> s.lat!=null && s.lon!=null);
+  const withoutCoords = stops.filter(s=> s.lat==null || s.lon==null);
+  if(start.lat==null || withCoords.length===0) return [...withCoords, ...withoutCoords];
+  let current = { lat:start.lat, lon:start.lon };
+  const remaining = [...withCoords], ordered = [];
+  while(remaining.length){
+    let bestIdx=0, bestDist=Infinity;
+    remaining.forEach((s,i)=>{ const d=haversineMiles(current,s); if(d<bestDist){bestDist=d; bestIdx=i;} });
+    const next = remaining.splice(bestIdx,1)[0];
+    ordered.push(next); current = { lat:next.lat, lon:next.lon };
+  }
+  return [...ordered, ...withoutCoords];
+}
+async function resolvePoint(selectVal, customInputId){
+  if(selectVal==='current'){
+    return new Promise(resolve=>{
+      if(!navigator.geolocation){ alert('Geolocation is not available in this browser.'); resolve(null); return; }
+      navigator.geolocation.getCurrentPosition(
+        pos=> resolve({ lat:pos.coords.latitude, lon:pos.coords.longitude, address:`${pos.coords.latitude.toFixed(5)},${pos.coords.longitude.toFixed(5)}` }),
+        err=> { alert('Could not get current location: ' + err.message); resolve(null); }
+      );
+    });
+  }
+  if(selectVal==='home'){
+    if(!homeCoord){ alert('Enter a home address on the left first.'); return null; }
+    return { lat:homeCoord.lat, lon:homeCoord.lon, address:homeCoord.address };
+  }
+  if(selectVal==='custom'){
+    const addr = document.getElementById(customInputId).value.trim();
+    if(!addr) return null;
+    const c = await geocodeAddress(addr);
+    return { lat:c?c.lat:null, lon:c?c.lon:null, address:addr };
+  }
+  if(selectVal && selectVal.startsWith('store:')){
+    const s = stores.find(x=> x.id===selectVal.slice(6));
+    return s ? { lat:s.lat, lon:s.lon, address:s.address||s.name, id:s.id } : null;
+  }
+  return null;
+}
+document.getElementById('startSelect').addEventListener('change', e=>{ document.getElementById('startAddrInput').style.display = e.target.value==='custom' ? 'block':'none'; });
+document.getElementById('endSelect').addEventListener('change', e=>{ document.getElementById('endAddrInput').style.display = e.target.value==='custom' ? 'block':'none'; });
+
+document.getElementById('generateRouteBtn').addEventListener('click', async ()=>{
+  const startVal = document.getElementById('startSelect').value;
+  const endVal = document.getElementById('endSelect').value;
+  const start = await resolvePoint(startVal, 'startAddrInput');
+  if(!start || !start.address){ alert('Pick or enter a valid start point.'); return; }
+  const end = endVal==='loop' ? start : await resolvePoint(endVal, 'endAddrInput');
+  if(!end || !end.address){ alert('Pick or enter a valid end point.'); return; }
+
+  let stops = stores.filter(s=> !s.avoid && s.address && passesFilter(s));
+  if(start.id) stops = stops.filter(s=> s.id!==start.id);
+  if(end.id) stops = stops.filter(s=> s.id!==end.id);
+
+  const ordered = orderStops(start, stops);
+  currentRoute = { start, ordered, end };
+  await drawRoute([start, ...ordered, end]);
+  renderRouteList();
+  document.getElementById('openMapsBtn').disabled = false;
+});
+
+document.getElementById('openMapsBtn').addEventListener('click', ()=>{
+  if(!currentRoute){ alert('Generate a route first.'); return; }
+  const { start, ordered, end } = currentRoute;
+  if(ordered.length > 9){
+    if(!confirm(`This route has ${ordered.length} stops — Google Maps may truncate very long routes. Continue anyway?`)) return;
+  }
+  const origin = encodeURIComponent(start.address);
+  const destination = encodeURIComponent(end.address);
+  const waypoints = ordered.map(s=> encodeURIComponent(s.address)).join('|');
+  let url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=driving`;
+  if(waypoints) url += `&waypoints=${waypoints}`;
+  window.open(url, '_blank');
+});
+
+/* ---------- init ---------- */
+initMap();
+migrateStores();
+populateHuntSelect();
+render();
+setTimeout(syncChainCheckboxes, 0);
+</script>
+</body>
+</html>
