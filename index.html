@@ -26,11 +26,11 @@
 
   .checker-stripe{height:6px; background-image:repeating-linear-gradient(90deg, #000 0 10px, #f2f0ec 10px 20px); opacity:0.9;}
 
-  header{display:grid; grid-template-columns:1fr auto 1fr; align-items:center; padding:14px 18px; background:var(--bg-panel);}
-  .header-logo{height:38px; width:auto; justify-self:start;}
+  header{display:grid; grid-template-columns:1fr auto 1fr; align-items:center; padding:28px 18px; background:var(--bg-panel);}
+  .header-logo{height:76px; width:auto; justify-self:start;}
   header h1{font-family:'Anton',sans-serif; text-transform:uppercase; font-size:1.35rem; margin:0; text-align:center; letter-spacing:.02em; min-width:0;
     background:linear-gradient(90deg, var(--flame1), var(--flame2) 60%, var(--flame3)); -webkit-background-clip:text; background-clip:text; color:transparent;}
-  @media (max-width:380px){ header h1{font-size:1.05rem;} .header-logo{height:30px;} }
+  @media (max-width:380px){ header h1{font-size:1.05rem;} .header-logo{height:58px;} }
   .hamburger-btn{justify-self:end; background:none; border:1px solid #34343a; color:var(--ink); border-radius:8px; font-size:1.3rem; padding:6px 12px; cursor:pointer;}
 
   .menu-overlay{position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:5000; display:none;}
@@ -58,8 +58,8 @@
   .hunt-spinner-overlay{position:absolute; inset:0; z-index:460; background:rgba(11,11,13,0.72); border-radius:10px; display:none; flex-direction:column; align-items:center; justify-content:center; gap:10px;}
   .hunt-spinner-overlay.show{display:flex;}
   @keyframes spinWheel{ to{ transform:rotate(360deg); } }
-  .hunt-spinner-wheel{width:64px; height:64px; animation:spinWheel 0.9s linear infinite;}
-  .hunt-spinner-overlay span{font-family:'Anton',sans-serif; text-transform:uppercase; letter-spacing:.05em; color:var(--flame1); font-size:1.1rem;}
+  .hunt-spinner-wheel{width:128px; height:128px; animation:spinWheel 0.9s linear infinite;}
+  .hunt-spinner-overlay span{font-family:'Anton',sans-serif; text-transform:uppercase; letter-spacing:.05em; color:var(--flame1); font-size:2.1rem;}
   .leaflet-popup-content-wrapper{background:#1b1b1e; color:var(--ink);}
   .leaflet-popup-tip{background:#1b1b1e;}
   .leaflet-popup-content{font-family:'Rajdhani',sans-serif; font-size:0.9rem;}
@@ -193,7 +193,7 @@
 <body>
 
 <header>
-  <img src="512_Icon_Dark_SVG.svg" alt="Treasure Hunt Tracker" class="header-logo">
+  <img src="THT_No_Background.png" alt="Treasure Hunt Tracker" class="header-logo" onerror="this.style.display='none'; console.error('Header logo failed to load — check that THT_No_Background.png is committed at the site root and the filename matches exactly.');">
   <h1>Treasure Hunt Tracker</h1>
   <button class="hamburger-btn" id="menuBtn">☰</button>
 </header>
@@ -234,7 +234,6 @@
   <section class="location-row">
     <input type="text" id="centerInput" placeholder="e.g. 35749 or Huntsville, AL">
     <button class="btn-tiny" id="pickCenterBtn">📍 Pick on map</button>
-    <span class="status-text" id="centerStatus"></span>
   </section>
 
   <div class="map-wrap">
@@ -403,7 +402,7 @@ function saveHunts(){ storage.set('ph_hunts', JSON.stringify(hunts)); populateHu
 function saveCarTypes(){ storage.set('ph_cartypes', JSON.stringify(carTypes)); }
 function saveTargets(){ storage.set('ph_targets', JSON.stringify(targets)); renderTargets(); }
 function esc(str){ return (str||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
-function setCenterStatus(t){ document.getElementById('centerStatus').textContent = t; }
+function setCenterStatus(t){ /* location status indicator removed per user request; kept as no-op so existing calls stay safe */ }
 
 function makeStore(name, category, auto){
   return { id:'s'+Date.now()+Math.random().toString(36).slice(2,7), name, category, auto:!!auto, chain:null, osmId:null,
