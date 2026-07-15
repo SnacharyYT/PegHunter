@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Treasure Hunt Tracker</title>
-<link rel="icon" href="THT_512_Icon.svg" type="image/svg+xml">
+<link rel="icon" href="512_Icon_Dark_SVG.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Rajdhani:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -27,11 +27,10 @@
   .checker-stripe{height:6px; background-image:repeating-linear-gradient(90deg, #000 0 10px, #f2f0ec 10px 20px); opacity:0.9;}
 
   header{display:grid; grid-template-columns:1fr auto 1fr; align-items:center; padding:14px 18px; background:var(--bg-panel);}
-  .header-spacer{}
-  header h1{font-family:'Anton',sans-serif; text-transform:uppercase; font-size:1.35rem; margin:0; text-align:center; letter-spacing:.02em; min-width:0; display:flex; align-items:center; justify-content:center; gap:8px;
+  .header-logo{height:38px; width:auto; justify-self:start;}
+  header h1{font-family:'Anton',sans-serif; text-transform:uppercase; font-size:1.35rem; margin:0; text-align:center; letter-spacing:.02em; min-width:0;
     background:linear-gradient(90deg, var(--flame1), var(--flame2) 60%, var(--flame3)); -webkit-background-clip:text; background-clip:text; color:transparent;}
-  .app-logo{height:1.5em; width:auto; flex-shrink:0;}
-  @media (max-width:380px){ header h1{font-size:1.05rem;} }
+  @media (max-width:380px){ header h1{font-size:1.05rem;} .header-logo{height:30px;} }
   .hamburger-btn{justify-self:end; background:none; border:1px solid #34343a; color:var(--ink); border-radius:8px; font-size:1.3rem; padding:6px 12px; cursor:pointer;}
 
   .menu-overlay{position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:5000; display:none;}
@@ -42,17 +41,25 @@
   .menu-drawer h2:first-of-type{margin-top:6px;}
   .menu-close{position:absolute; top:14px; right:14px; background:none; border:none; color:var(--ink); font-size:1.3rem; cursor:pointer;}
   .guide-list{margin:0; padding-left:20px; font-size:0.86rem; color:var(--ink-soft); line-height:1.6;}
+  .menu-btn-row{justify-content:center;}
+  .app-version{text-align:center; color:var(--ink-soft); font-size:0.7rem; margin-top:20px;}
   .guide-list li{margin-bottom:8px;}
 
   main.stack{max-width:640px; margin:0 auto; padding:16px; display:flex; flex-direction:column; gap:14px;}
 
   .location-row{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
-  .location-row input{flex:1; min-width:140px; padding:11px 12px; border-radius:8px; border:1px solid #34343a; background:#0f0f11; color:var(--ink); font-family:'Rajdhani',sans-serif; font-size:16px;}
+  .location-row input{flex:1; min-width:140px; height:46px; padding:0 12px; border-radius:8px; border:1px solid #34343a; background:#0f0f11; color:var(--ink); font-family:'Rajdhani',sans-serif; font-size:16px; box-sizing:border-box;}
+  .location-row button{height:46px; box-sizing:border-box;}
   .status-text{font-size:0.72rem; color:var(--ink-soft); white-space:nowrap;}
 
   .map-wrap{position:relative;}
   #map{height:360px; border-radius:10px; border:1px solid var(--line); background:#0f0f11;}
   .map-theme-btn{position:absolute; top:10px; right:10px; z-index:450; background:var(--bg-panel); border:1px solid var(--line); color:var(--ink); border-radius:8px; padding:7px 10px; font-size:1.1rem; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,.4);}
+  .hunt-spinner-overlay{position:absolute; inset:0; z-index:460; background:rgba(11,11,13,0.72); border-radius:10px; display:none; flex-direction:column; align-items:center; justify-content:center; gap:10px;}
+  .hunt-spinner-overlay.show{display:flex;}
+  @keyframes spinWheel{ to{ transform:rotate(360deg); } }
+  .hunt-spinner-wheel{width:64px; height:64px; animation:spinWheel 0.9s linear infinite;}
+  .hunt-spinner-overlay span{font-family:'Anton',sans-serif; text-transform:uppercase; letter-spacing:.05em; color:var(--flame1); font-size:1.1rem;}
   .leaflet-popup-content-wrapper{background:#1b1b1e; color:var(--ink);}
   .leaflet-popup-tip{background:#1b1b1e;}
   .leaflet-popup-content{font-family:'Rajdhani',sans-serif; font-size:0.9rem;}
@@ -127,24 +134,32 @@
   .store-card .close-x{position:absolute; top:12px; right:14px; background:none; border:none; color:var(--ink-soft); font-size:1.2rem; cursor:pointer;}
   .store-card .tab{position:absolute; top:12px; left:14px; background:var(--card-2); color:var(--ink-soft); font-family:'IBM Plex Mono',monospace; font-size:0.62rem; padding:3px 9px; border-radius:3px; text-transform:uppercase; letter-spacing:.05em; font-weight:600; border:1px solid var(--line);}
   .store-card h3{font-family:'Anton',sans-serif; text-transform:uppercase; font-size:1.5rem; margin:30px 0 4px; letter-spacing:.02em;}
-  .card-top-row{display:flex; align-items:center; gap:8px; flex-wrap:nowrap; margin-top:30px;}
-  .card-title{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin:0 !important;}
-  .quick-actions{display:flex; gap:6px; flex-shrink:0;}
-  .qa-btn{background:var(--card-2); border:1px solid var(--line); color:var(--ink); border-radius:8px; width:38px; height:38px; font-size:1.05rem; cursor:pointer; flex-shrink:0;}
-  .qa-btn.qa-active-green{background:var(--green); border-color:var(--green);}
+  .card-top-row{display:flex; align-items:center; gap:6px; flex-wrap:nowrap; margin-top:6px;}
+  .card-title{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin:0 !important; font-size:1.3rem !important;}
+  .quick-actions{display:flex; gap:4px; flex-shrink:0;}
+  .qa-btn{background:var(--card-2); border:1px solid var(--line); color:var(--ink); border-radius:8px; width:42px; height:40px; font-size:1rem; line-height:1; cursor:pointer; flex-shrink:0; padding:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px;}
+  .qa-btn span{font-family:'Rajdhani',sans-serif; font-weight:700; font-size:0.5rem; text-transform:uppercase; letter-spacing:.02em;}
+  .qa-btn.qa-close{font-size:1.05rem;}
+  .qa-btn.qa-active-green{background:var(--green); border-color:var(--green); color:#08201d;}
   .qa-btn.qa-active-gray{background:var(--gray-avoid); border-color:var(--gray-avoid);}
-  .qa-btn.qa-active-flame{background:var(--flame2); border-color:var(--flame2);}
-  .card-body-grid{display:flex; gap:14px; margin-top:10px; align-items:flex-start;}
+  .qa-btn.qa-active-flame{background:var(--flame2); border-color:var(--flame2); color:#141416;}
+  .category-line{font-size:0.68rem; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-soft); margin-bottom:4px;}
+  .card-body-grid{display:flex; gap:14px; margin-top:8px; align-items:flex-start;}
   .card-info-col{flex:1; min-width:0;}
-  .card-photo-col{width:112px; flex-shrink:0;}
-  .card-photo-col .peg-photo{width:112px; height:112px; max-height:112px; margin-bottom:0;}
-  .photo-placeholder{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; width:112px; height:112px; border:2px dashed var(--line); border-radius:8px; color:var(--ink-soft); font-size:0.68rem; text-align:center; cursor:pointer; padding:4px;}
+  .card-photo-col{flex:1; min-width:0;}
+  .square-photo{aspect-ratio:1/1 !important; max-height:none !important; object-fit:cover;}
+  .card-photo-col .peg-photo, .photo-placeholder{width:100%; aspect-ratio:1/1; margin-bottom:0;}
+  .photo-placeholder{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; border:2px dashed var(--line); border-radius:8px; color:var(--ink-soft); font-size:0.68rem; text-align:center; cursor:pointer; padding:4px;}
   .photo-placeholder span:first-child{font-size:1.6rem;}
   .store-card .addr{font-size:0.84rem; color:var(--ink-soft); margin-bottom:8px; word-break:break-word;}
   .status-pill{display:inline-block; font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; padding:4px 10px; border-radius:999px; margin-bottom:10px;}
-  .tag-badges{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px;}
-  .tag-badge{font-size:0.7rem; background:var(--card-2); padding:4px 9px; border-radius:999px; border:1px solid var(--line); color:var(--flame2); font-weight:600;}
-  .meta-line{font-size:0.8rem; color:var(--ink-soft); margin-bottom:6px;}
+  .tag-badges{display:flex; gap:4px; flex-wrap:wrap; margin-bottom:8px; max-height:52px; overflow-y:auto;}
+  .tag-badge{font-size:0.62rem; background:var(--card-2); padding:3px 7px; border-radius:999px; border:1px solid var(--line); color:var(--flame2); font-weight:600;}
+  .meta-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:8px 0;}
+  .meta-label{display:block; font-size:0.6rem; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-soft);}
+  .meta-value{display:block; font-size:0.85rem; color:var(--ink);}
+  .notes-display{font-size:0.82rem; color:var(--ink-soft); line-height:1.4; white-space:pre-wrap;}
+  .notes-display.notes-empty{font-style:italic; opacity:.65;}
   .overdue{color:var(--red); font-weight:700; font-size:0.74rem; margin-left:4px;}
   textarea.notes{width:100%; min-height:56px; font-family:'Rajdhani',sans-serif; font-size:0.9rem; padding:9px 10px; border:1px solid var(--line); border-radius:6px; resize:vertical; background:#0f0f11; color:var(--ink-soft);}
   .peg-photo{width:100%; max-height:200px; object-fit:cover; border-radius:6px; margin-bottom:10px; border:1px solid var(--line); cursor:pointer;}
@@ -178,8 +193,8 @@
 <body>
 
 <header>
-  <div class="header-spacer"></div>
-  <h1><img src="THT_512_Icon.svg" alt="" class="app-logo">Treasure Hunt Tracker</h1>
+  <img src="512_Icon_Dark_SVG.svg" alt="Treasure Hunt Tracker" class="header-logo">
+  <h1>Treasure Hunt Tracker</h1>
   <button class="hamburger-btn" id="menuBtn">☰</button>
 </header>
 <div class="checker-stripe"></div>
@@ -190,7 +205,7 @@
 
   <h2>Saved Hunts</h2>
   <select id="huntSelect" style="width:100%;margin-bottom:8px;"><option value="">— saved hunts —</option></select>
-  <div class="btn-row">
+  <div class="btn-row menu-btn-row">
     <button class="btn-tiny" id="loadHuntBtn">Load</button>
     <button class="btn-tiny" id="deleteHuntBtn">Delete</button>
     <button class="btn-tiny" id="saveHuntBtn">💾 Save Hunt</button>
@@ -200,7 +215,8 @@
   <button class="btn-tiny" id="bombBtn" style="border-color:var(--red);color:var(--red);width:100%;">💣 Clear All Data</button>
 
   <h2>Support</h2>
-  <a id="donateBtn" href="https://paypal.me/ZachEason23" target="_blank" rel="noopener" class="btn" style="display:block;text-align:center;text-decoration:none;">☕ Donate</a>
+  <a id="donateBtn" href="https://paypal.me/ZachEason23" target="_blank" rel="noopener" class="btn" style="display:block;text-align:center;text-decoration:none;margin-bottom:8px;">☕ Donate</a>
+  <a href="mailto:TreasureHuntTracker@gmail.com?subject=Suggestion" class="btn secondary" style="display:block;text-align:center;text-decoration:none;">💡 Send a Suggestion</a>
 
   <h2>Quick Guide</h2>
   <ol class="guide-list">
@@ -210,6 +226,8 @@
     <li>Open <strong>Route Details</strong> to generate your route and send it to Google Maps.</li>
     <li>Track wishlist cars in <strong>🔥 Hot List</strong>.</li>
   </ol>
+
+  <p class="app-version">v1.1 — July 2026</p>
 </div>
 
 <main class="stack">
@@ -222,6 +240,10 @@
   <div class="map-wrap">
     <div id="map"></div>
     <button class="map-theme-btn" id="mapThemeBtn" title="Toggle day/night map">☀️</button>
+    <div class="hunt-spinner-overlay" id="huntSpinnerOverlay">
+      <img src="wheels-icon-png-31823.png" alt="" class="hunt-spinner-wheel">
+      <span>Hunting…</span>
+    </div>
   </div>
   <div class="checker-stripe"></div>
 
@@ -315,7 +337,7 @@
   </section>
 </main>
 
-<footer>PegHunter stores everything locally in this browser — nothing is sent to a server except free map/search lookups (OpenStreetMap + OSRM).</footer>
+<footer>Everything is stored locally in this browser — nothing is sent to a server except free map/search lookups (OpenStreetMap + OSRM).</footer>
 
 <div class="lightbox-overlay" id="lightboxOverlay">
   <div class="lightbox-frame">
@@ -617,20 +639,34 @@ function syncChainCheckboxes(){
 }
 
 /* ---------- HUNT! button ---------- */
+let huntInProgress = false;
 document.getElementById('huntBtn').addEventListener('click', async ()=>{
   const center = await ensureSearchCenter();
   if(!center) return;
   const checked = Array.from(document.querySelectorAll('input[data-chain]:checked'));
   if(checked.length===0){ alert('Check at least one store type first.'); return; }
+
+  // clear any stale route from a previous hunt so results aren't mixed up
+  currentRoute = null;
+  if(routeLayer) routeLayer.clearLayers();
+  document.getElementById('openMapsBtn').disabled = true;
+  document.getElementById('generateRouteBtn').disabled = false;
+
   const btn = document.getElementById('huntBtn');
   const original = btn.textContent;
   btn.disabled = true;
+  huntInProgress = true;
+  document.getElementById('huntSpinnerOverlay').classList.add('show');
+  render(); // keeps Route Details greyed out for the duration of the hunt
   for(let i=0;i<checked.length;i++){
     btn.textContent = `Hunting… ${i+1}/${checked.length}`;
     await searchChain(checked[i].dataset.chain, checked[i].dataset.groupLabel);
   }
   btn.textContent = original;
+  huntInProgress = false;
+  document.getElementById('huntSpinnerOverlay').classList.remove('show');
   // stays disabled until a hunt-setup variable actually changes (see reEnableHunt below)
+  render();
   openTabForce('route');
 });
 function reEnableHunt(){ document.getElementById('huntBtn').disabled = false; }
@@ -844,6 +880,7 @@ function updateMap(){
   const pts = [];
   stores.forEach(s=>{
     if(s.lat==null || s.lon==null) return;
+    if(!passesFilter(s)) return;
     const status = getStoreStatus(s);
     const color = resolvedColor(status.color);
     const marker = L.circleMarker([s.lat,s.lon], { radius:9, color:'#0b0b0d', weight:2, fillColor:color, fillOpacity:0.95 }).addTo(markersLayer);
@@ -952,8 +989,8 @@ function renderRouteList(){
     currentRoute.ordered.forEach((s,i)=> addRow(`${i+1}. ${s.name}`, resolvedColor(getStoreStatus(s).color), s.id, true, i, currentRoute.ordered.length));
     addRow('End: ' + (currentRoute.end.address||'End'), '#8a8a90', null, false);
   } else {
-    const list = stores.filter(s=>!s.avoid);
-    if(!list.length) el.innerHTML = '<p style="font-size:0.8rem;color:var(--ink-soft);">No stores yet.</p>';
+    const list = stores.filter(s=> !s.avoid && passesFilter(s));
+    if(!list.length) el.innerHTML = '<p style="font-size:0.8rem;color:var(--ink-soft);">No stores match your current filter.</p>';
     else list.forEach(s=> addRow(s.name, resolvedColor(getStoreStatus(s).color), s.id, false));
   }
 }
@@ -1008,32 +1045,34 @@ function renderStoreDetail(){
   const lastPhoto = store.photos && store.photos.length ? store.photos[store.photos.length-1] : null;
   const activeTags = carTypes.filter(t=> store.carTags && store.carTags[t]);
   const photoColHtml = lastPhoto
-    ? `<img class="peg-photo" data-role="photoThumb" src="${lastPhoto.dataUrl}">`
+    ? `<img class="peg-photo square-photo" data-role="photoThumb" src="${lastPhoto.dataUrl}">`
     : `<label class="photo-placeholder"><span>📷</span><span>Tap to add photo</span><input type="file" accept="image/*" data-role="photoPlaceholder" style="display:none;"></label>`;
   card.innerHTML = `
-    <button class="close-x" data-role="closeX">✕</button>
-    <span class="tab">${esc(store.category || 'store')}</span>
     <div class="card-top-row">
       <h3 class="card-title">${esc(store.name)}</h3>
       <div class="quick-actions">
-        <button class="qa-btn ${store.lastChecked?'qa-active-green':''}" data-role="markVisited" title="${store.lastChecked?'Undo hunted':'Mark hunted'}">🎯</button>
-        <button class="qa-btn ${store.avoid?'qa-active-gray':''}" data-role="avoid" title="${store.avoid?'Un-skip':'Skip this store'}">🚫</button>
-        <button class="qa-btn ${store.favorite?'qa-active-flame':''}" data-role="favorite" title="${store.favorite?'Un-favorite':'Favorite'}">🔥</button>
+        <button class="qa-btn ${store.lastChecked?'qa-active-green':''}" data-role="markVisited" title="${store.lastChecked?'Undo hunted':'Mark hunted'}">🎯<span>Hunt</span></button>
+        <button class="qa-btn ${store.avoid?'qa-active-gray':''}" data-role="avoid" title="${store.avoid?'Un-skip':'Skip this store'}">🚫<span>Skip</span></button>
+        <button class="qa-btn ${store.favorite?'qa-active-flame':''}" data-role="favorite" title="${store.favorite?'Un-favorite':'Favorite'}">🔥<span>Fav</span></button>
+        <button class="qa-btn qa-close" data-role="closeX" title="Close">✕</button>
       </div>
     </div>
-    <div class="addr">${esc(store.address) || '<em>no address yet</em>'}</div>
     <span class="status-pill" style="background:${status.color};color:#0b0b0d;">${status.label}</span>
     <div class="card-body-grid">
       <div class="card-info-col">
+        <div class="category-line">${esc(store.category || 'store')}</div>
+        <div class="addr">${esc(store.address) || '<em>no address yet</em>'}</div>
         ${activeTags.length ? `<div class="tag-badges">${activeTags.map(t=>`<span class="tag-badge">${esc(t)}</span>`).join('')}</div>` : ''}
-        <div class="meta-line">Last hunted: ${store.lastChecked || 'never'}</div>
-        <div class="meta-line">Next restock: ${store.restockDay || 'not set'}${daysOverdue(store)?'<span class="overdue">⚠ check now</span>':''}</div>
-        <textarea class="notes" data-role="notesDisplay" readonly placeholder="No notes yet — click Edit to add some.">${esc(store.notes)}</textarea>
+        <div class="meta-grid">
+          <div><span class="meta-label">Last hunted</span><span class="meta-value">${store.lastChecked || 'never'}</span></div>
+          <div><span class="meta-label">Next restock</span><span class="meta-value">${store.restockDay || 'not set'}${daysOverdue(store)?' <span class="overdue">⚠</span>':''}</span></div>
+        </div>
+        ${store.notes ? `<div class="notes-display">${esc(store.notes)}</div>` : `<div class="notes-display notes-empty">No notes yet — tap Edit to add some.</div>`}
       </div>
       <div class="card-photo-col">${photoColHtml}</div>
     </div>
     <div class="card-actions">
-      <label class="upload">📷 Add photo<input type="file" accept="image/*" data-role="photo" style="display:none;"></label>
+      ${lastPhoto ? `<label class="upload">📷 Add photo<input type="file" accept="image/*" data-role="photo" style="display:none;"></label>` : ''}
       <button class="btn small secondary" data-role="editBtn">✏️ Edit</button>
       <button class="btn small secondary" data-role="remove">Remove</button>
     </div>`;
@@ -1075,7 +1114,7 @@ function render(){
   updateMap();
   renderRouteList();
   renderStoreDetail();
-  document.querySelector('.tab-btn[data-tab="route"]').disabled = stores.length === 0;
+  document.querySelector('.tab-btn[data-tab="route"]').disabled = huntInProgress || stores.length === 0;
   const routable = stores.filter(s=> !s.avoid && s.address);
   document.getElementById('routeCount').textContent = `${routable.length} stop${routable.length===1?'':'s'} available for the route`;
 }
@@ -1144,7 +1183,7 @@ function renderTargetDetail(){
     <button class="close-x" data-role="closeX">✕</button>
     <h3 style="margin-top:30px;">${esc(t.name)}</h3>
     <span class="status-pill" style="background:${t.found?'var(--green)':'var(--card-2)'};color:${t.found?'#08201d':'var(--ink-soft)'};">${t.found ? 'Found ' + t.foundDate : 'Still hunting'}</span>
-    ${lastPhoto?`<img class="peg-photo" data-role="photoThumb" src="${lastPhoto.dataUrl}">`:''}
+    ${lastPhoto?`<img class="peg-photo square-photo" data-role="photoThumb" src="${lastPhoto.dataUrl}" style="max-width:220px;">`:''}
     <textarea class="notes" readonly placeholder="No notes yet — click Edit to add some.">${esc(t.notes)}</textarea>
     <div class="card-actions">
       <label class="upload">📷 Photo<input type="file" accept="image/*" data-role="photo" style="display:none;"></label>
