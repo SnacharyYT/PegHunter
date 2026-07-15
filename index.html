@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>PegHunter</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎯</text></svg>">
+<title>Treasure Hunt Tracker</title>
+<link rel="icon" href="THT_512_Icon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Rajdhani:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -28,13 +28,15 @@
 
   header{display:grid; grid-template-columns:1fr auto 1fr; align-items:center; padding:14px 18px; background:var(--bg-panel);}
   .header-spacer{}
-  header h1{font-family:'Anton',sans-serif; text-transform:uppercase; font-size:1.9rem; margin:0; text-align:center; letter-spacing:.02em;
+  header h1{font-family:'Anton',sans-serif; text-transform:uppercase; font-size:1.35rem; margin:0; text-align:center; letter-spacing:.02em; min-width:0; display:flex; align-items:center; justify-content:center; gap:8px;
     background:linear-gradient(90deg, var(--flame1), var(--flame2) 60%, var(--flame3)); -webkit-background-clip:text; background-clip:text; color:transparent;}
+  .app-logo{height:1.5em; width:auto; flex-shrink:0;}
+  @media (max-width:380px){ header h1{font-size:1.05rem;} }
   .hamburger-btn{justify-self:end; background:none; border:1px solid #34343a; color:var(--ink); border-radius:8px; font-size:1.3rem; padding:6px 12px; cursor:pointer;}
 
-  .menu-overlay{position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:590; display:none;}
+  .menu-overlay{position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:5000; display:none;}
   .menu-overlay.show{display:block;}
-  .menu-drawer{position:fixed; top:0; right:0; bottom:0; width:86%; max-width:340px; background:var(--bg-panel); transform:translateX(105%); transition:transform .25s ease; z-index:600; overflow-y:auto; padding:20px; box-shadow:-8px 0 30px rgba(0,0,0,.6);}
+  .menu-drawer{position:fixed; top:0; right:0; bottom:0; width:86%; max-width:340px; background:var(--bg-panel); transform:translateX(105%); transition:transform .25s ease; z-index:5010; overflow-y:auto; padding:20px; box-shadow:-8px 0 30px rgba(0,0,0,.6);}
   .menu-drawer.open{transform:translateX(0);}
   .menu-drawer h2{font-family:'Anton',sans-serif; text-transform:uppercase; font-size:1.05rem; letter-spacing:.04em; color:var(--flame2); margin:18px 0 8px; border-bottom:1px solid var(--line); padding-bottom:6px;}
   .menu-drawer h2:first-of-type{margin-top:6px;}
@@ -44,9 +46,9 @@
 
   main.stack{max-width:640px; margin:0 auto; padding:16px; display:flex; flex-direction:column; gap:14px;}
 
-  .location-row{display:flex; gap:8px;}
-  .location-row input{flex:1; padding:11px 12px; border-radius:8px; border:1px solid #34343a; background:#0f0f11; color:var(--ink); font-family:'Rajdhani',sans-serif; font-size:16px;}
-  .status-text{font-size:0.72rem; color:var(--ink-soft); margin-top:4px; display:block; min-height:1em;}
+  .location-row{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
+  .location-row input{flex:1; min-width:140px; padding:11px 12px; border-radius:8px; border:1px solid #34343a; background:#0f0f11; color:var(--ink); font-family:'Rajdhani',sans-serif; font-size:16px;}
+  .status-text{font-size:0.72rem; color:var(--ink-soft); white-space:nowrap;}
 
   .map-wrap{position:relative;}
   #map{height:360px; border-radius:10px; border:1px solid var(--line); background:#0f0f11;}
@@ -62,6 +64,7 @@
   .tab-buttons{display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;}
   .tab-btn{background:var(--card-2); border:1px solid var(--line); color:var(--ink); border-radius:8px; padding:12px 6px; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:0.86rem; cursor:pointer; text-align:center;}
   .tab-btn.active{background:linear-gradient(90deg, var(--flame1), var(--flame2)); color:#141416; border-color:transparent;}
+  .tab-btn:disabled{opacity:.35; cursor:not-allowed;}
 
   .tab-panel{display:none; background:var(--bg-panel); border:1px solid var(--line); border-radius:10px; padding:16px;}
   .tab-panel.open{display:block;}
@@ -114,6 +117,8 @@
   .btn.fav-active{background:var(--flame2); color:#141416;}
   .btn:disabled{opacity:0.4; cursor:not-allowed;}
   .btn-row{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px;}
+  .route-actions-row{display:flex; gap:6px; flex-wrap:nowrap; margin-bottom:8px;}
+  .route-actions-row .btn{flex:1 1 0; min-width:0; padding:10px 6px; font-size:0.78rem; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
 
   .empty{border:1px dashed #34343a; border-radius:10px; padding:30px 18px; text-align:center; color:var(--ink-soft);}
 
@@ -122,6 +127,19 @@
   .store-card .close-x{position:absolute; top:12px; right:14px; background:none; border:none; color:var(--ink-soft); font-size:1.2rem; cursor:pointer;}
   .store-card .tab{position:absolute; top:12px; left:14px; background:var(--card-2); color:var(--ink-soft); font-family:'IBM Plex Mono',monospace; font-size:0.62rem; padding:3px 9px; border-radius:3px; text-transform:uppercase; letter-spacing:.05em; font-weight:600; border:1px solid var(--line);}
   .store-card h3{font-family:'Anton',sans-serif; text-transform:uppercase; font-size:1.5rem; margin:30px 0 4px; letter-spacing:.02em;}
+  .card-top-row{display:flex; align-items:center; gap:8px; flex-wrap:nowrap; margin-top:30px;}
+  .card-title{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin:0 !important;}
+  .quick-actions{display:flex; gap:6px; flex-shrink:0;}
+  .qa-btn{background:var(--card-2); border:1px solid var(--line); color:var(--ink); border-radius:8px; width:38px; height:38px; font-size:1.05rem; cursor:pointer; flex-shrink:0;}
+  .qa-btn.qa-active-green{background:var(--green); border-color:var(--green);}
+  .qa-btn.qa-active-gray{background:var(--gray-avoid); border-color:var(--gray-avoid);}
+  .qa-btn.qa-active-flame{background:var(--flame2); border-color:var(--flame2);}
+  .card-body-grid{display:flex; gap:14px; margin-top:10px; align-items:flex-start;}
+  .card-info-col{flex:1; min-width:0;}
+  .card-photo-col{width:112px; flex-shrink:0;}
+  .card-photo-col .peg-photo{width:112px; height:112px; max-height:112px; margin-bottom:0;}
+  .photo-placeholder{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; width:112px; height:112px; border:2px dashed var(--line); border-radius:8px; color:var(--ink-soft); font-size:0.68rem; text-align:center; cursor:pointer; padding:4px;}
+  .photo-placeholder span:first-child{font-size:1.6rem;}
   .store-card .addr{font-size:0.84rem; color:var(--ink-soft); margin-bottom:8px; word-break:break-word;}
   .status-pill{display:inline-block; font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; padding:4px 10px; border-radius:999px; margin-bottom:10px;}
   .tag-badges{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px;}
@@ -135,9 +153,9 @@
 
   .route-list-item{background:#0f0f11; border-left:5px solid var(--hunt-orange); padding:9px 10px; border-radius:4px; margin-bottom:8px; font-size:0.84rem; display:flex; align-items:center; gap:8px;}
   .route-list-item.selected{outline:2px solid var(--flame2);}
-  .rli-label{flex:1; cursor:pointer;}
-  .rli-move{display:flex; gap:3px;}
-  .rli-move button{background:var(--card-2); border:1px solid var(--line); color:var(--ink); border-radius:4px; width:26px; height:26px; cursor:pointer; font-size:0.85rem;}
+  .rli-label{flex:1; cursor:pointer; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .rli-move{display:flex; gap:3px; flex-shrink:0;}
+  .rli-move button{background:var(--card-2); border:1px solid var(--line); color:var(--ink); border-radius:4px; width:30px; height:30px; cursor:pointer; font-size:0.9rem; flex-shrink:0;}
   .rli-move button:disabled{opacity:0.3; cursor:not-allowed;}
 
   .target-row{background:#0f0f11; border-left:5px solid var(--line); padding:10px; border-radius:4px; margin-bottom:8px; display:flex; align-items:center; gap:10px;}
@@ -161,7 +179,7 @@
 
 <header>
   <div class="header-spacer"></div>
-  <h1>🎯 PegHunter</h1>
+  <h1><img src="THT_512_Icon.svg" alt="" class="app-logo">Treasure Hunt Tracker</h1>
   <button class="hamburger-btn" id="menuBtn">☰</button>
 </header>
 <div class="checker-stripe"></div>
@@ -198,13 +216,14 @@
   <section class="location-row">
     <input type="text" id="centerInput" placeholder="e.g. 35749 or Huntsville, AL">
     <button class="btn-tiny" id="pickCenterBtn">📍 Pick on map</button>
+    <span class="status-text" id="centerStatus"></span>
   </section>
-  <span class="status-text" id="centerStatus"></span>
 
   <div class="map-wrap">
     <div id="map"></div>
     <button class="map-theme-btn" id="mapThemeBtn" title="Toggle day/night map">☀️</button>
   </div>
+  <div class="checker-stripe"></div>
 
   <div id="storeDetail"></div>
   <div id="emptyState" class="empty">Tap a pin on the map, or a store in Route Details, to see it here.</div>
@@ -274,10 +293,10 @@
   </section>
 
   <section class="tab-panel" id="panel-route">
-    <div class="btn-row">
-      <button class="btn secondary" id="generateRouteBtn">🧭 Generate Route</button>
-      <button class="btn teal" id="openMapsBtn" disabled>📲 Open in Google Maps</button>
-      <button class="btn small secondary" id="clearBoardBtn">🧹 Clear board</button>
+    <div class="route-actions-row">
+      <button class="btn secondary" id="generateRouteBtn">Generate Route</button>
+      <button class="btn teal" id="openMapsBtn" disabled>Open in Maps</button>
+      <button class="btn secondary" id="clearBoardBtn">Clear board</button>
     </div>
     <p class="hint-text" id="routeCount">0 stops ready</p>
     <h3>Route Order</h3>
@@ -568,6 +587,7 @@ PRESET_GROUPS.forEach(group=>{
   wrap.querySelector('.cat-select-all').addEventListener('change', (e)=>{
     const checked = e.target.checked;
     wrap.querySelectorAll('input[data-chain]').forEach(cb=> cb.checked = checked);
+    reEnableHunt();
   });
   catGroupsEl.appendChild(wrap);
 
@@ -579,7 +599,7 @@ PRESET_GROUPS.forEach(group=>{
     });
   });
   wrap.querySelectorAll('input[data-chain]').forEach(cb=>{
-    cb.addEventListener('change', ()=> syncCategoryMasterState(wrap));
+    cb.addEventListener('change', ()=>{ syncCategoryMasterState(wrap); reEnableHunt(); });
   });
 });
 function syncCategoryMasterState(wrap){
@@ -610,8 +630,12 @@ document.getElementById('huntBtn').addEventListener('click', async ()=>{
     await searchChain(checked[i].dataset.chain, checked[i].dataset.groupLabel);
   }
   btn.textContent = original;
-  btn.disabled = false;
+  // stays disabled until a hunt-setup variable actually changes (see reEnableHunt below)
+  openTabForce('route');
 });
+function reEnableHunt(){ document.getElementById('huntBtn').disabled = false; }
+document.getElementById('centerInput').addEventListener('input', reEnableHunt);
+document.getElementById('radius').addEventListener('input', reEnableHunt);
 
 /* ---------- car types ---------- */
 function populateSeriesFilter(){
@@ -691,6 +715,7 @@ document.getElementById('clearBoardBtn').addEventListener('click', ()=>{
   document.getElementById('startAddrInput').value=''; document.getElementById('startAddrInput').style.display='none';
   document.getElementById('endAddrInput').value=''; document.getElementById('endAddrInput').style.display='none';
   document.getElementById('openMapsBtn').disabled = true;
+  document.getElementById('generateRouteBtn').disabled = false;
   populateRouteSelects();
   renderRouteList();
   updateMap();
@@ -748,13 +773,21 @@ document.getElementById('deleteHuntBtn').addEventListener('click', ()=>{
 /* ---------- tabs ---------- */
 const TAB_PANELS = { setup:'panel-setup', route:'panel-route', notes:'panel-notes' };
 function setTab(name){
+  const btn = document.querySelector(`.tab-btn[data-tab="${name}"]`);
+  if(btn.disabled) return;
   const isOpen = document.getElementById(TAB_PANELS[name]).classList.contains('open');
   Object.values(TAB_PANELS).forEach(pid=> document.getElementById(pid).classList.remove('open'));
   document.querySelectorAll('.tab-btn').forEach(b=> b.classList.remove('active'));
   if(!isOpen){
     document.getElementById(TAB_PANELS[name]).classList.add('open');
-    document.querySelector(`.tab-btn[data-tab="${name}"]`).classList.add('active');
+    btn.classList.add('active');
   }
+}
+function openTabForce(name){
+  Object.values(TAB_PANELS).forEach(pid=> document.getElementById(pid).classList.remove('open'));
+  document.querySelectorAll('.tab-btn').forEach(b=> b.classList.remove('active'));
+  document.getElementById(TAB_PANELS[name]).classList.add('open');
+  document.querySelector(`.tab-btn[data-tab="${name}"]`).classList.add('active');
 }
 document.querySelectorAll('.tab-btn').forEach(btn=> btn.addEventListener('click', ()=> setTab(btn.dataset.tab)));
 
@@ -907,6 +940,7 @@ function renderRouteList(){
         const swapWith = dir==='up' ? idx-1 : idx+1;
         if(swapWith<0 || swapWith>=arr.length) return;
         [arr[idx], arr[swapWith]] = [arr[swapWith], arr[idx]];
+        document.getElementById('generateRouteBtn').disabled = false;
         renderRouteList();
         await drawRoute([currentRoute.start, ...currentRoute.ordered, currentRoute.end]);
       }));
@@ -973,29 +1007,43 @@ function renderStoreDetail(){
 
   const lastPhoto = store.photos && store.photos.length ? store.photos[store.photos.length-1] : null;
   const activeTags = carTypes.filter(t=> store.carTags && store.carTags[t]);
+  const photoColHtml = lastPhoto
+    ? `<img class="peg-photo" data-role="photoThumb" src="${lastPhoto.dataUrl}">`
+    : `<label class="photo-placeholder"><span>📷</span><span>Tap to add photo</span><input type="file" accept="image/*" data-role="photoPlaceholder" style="display:none;"></label>`;
   card.innerHTML = `
     <button class="close-x" data-role="closeX">✕</button>
     <span class="tab">${esc(store.category || 'store')}</span>
-    <h3>${store.favorite?'🔥 ':''}${esc(store.name)}</h3>
+    <div class="card-top-row">
+      <h3 class="card-title">${esc(store.name)}</h3>
+      <div class="quick-actions">
+        <button class="qa-btn ${store.lastChecked?'qa-active-green':''}" data-role="markVisited" title="${store.lastChecked?'Undo hunted':'Mark hunted'}">🎯</button>
+        <button class="qa-btn ${store.avoid?'qa-active-gray':''}" data-role="avoid" title="${store.avoid?'Un-skip':'Skip this store'}">🚫</button>
+        <button class="qa-btn ${store.favorite?'qa-active-flame':''}" data-role="favorite" title="${store.favorite?'Un-favorite':'Favorite'}">🔥</button>
+      </div>
+    </div>
     <div class="addr">${esc(store.address) || '<em>no address yet</em>'}</div>
     <span class="status-pill" style="background:${status.color};color:#0b0b0d;">${status.label}</span>
-    ${activeTags.length ? `<div class="tag-badges">${activeTags.map(t=>`<span class="tag-badge">${esc(t)}</span>`).join('')}</div>` : ''}
-    <div class="meta-line">Last hunted: ${store.lastChecked || 'never'}</div>
-    <div class="meta-line">Next restock: ${store.restockDay || 'not set'}${daysOverdue(store)?'<span class="overdue">⚠ check now</span>':''}</div>
-    ${lastPhoto?`<img class="peg-photo" data-role="photoThumb" src="${lastPhoto.dataUrl}">`:''}
-    <textarea class="notes" data-role="notesDisplay" readonly placeholder="No notes yet — click Edit to add some.">${esc(store.notes)}</textarea>
+    <div class="card-body-grid">
+      <div class="card-info-col">
+        ${activeTags.length ? `<div class="tag-badges">${activeTags.map(t=>`<span class="tag-badge">${esc(t)}</span>`).join('')}</div>` : ''}
+        <div class="meta-line">Last hunted: ${store.lastChecked || 'never'}</div>
+        <div class="meta-line">Next restock: ${store.restockDay || 'not set'}${daysOverdue(store)?'<span class="overdue">⚠ check now</span>':''}</div>
+        <textarea class="notes" data-role="notesDisplay" readonly placeholder="No notes yet — click Edit to add some.">${esc(store.notes)}</textarea>
+      </div>
+      <div class="card-photo-col">${photoColHtml}</div>
+    </div>
     <div class="card-actions">
-      <button class="btn small teal" data-role="markVisited">🎯 Hunted!</button>
-      <button class="btn small ${store.favorite?'fav-active':''}" data-role="favorite">${store.favorite?'🔥 Favorited':'🔥 Favorite'}</button>
-      <label class="upload">📷 Peg photo<input type="file" accept="image/*" data-role="photo" style="display:none;"></label>
-      <button class="btn small ${store.avoid?'':'red'}" data-role="avoid">${store.avoid?'Un-avoid':'Avoid this store'}</button>
+      <label class="upload">📷 Add photo<input type="file" accept="image/*" data-role="photo" style="display:none;"></label>
       <button class="btn small secondary" data-role="editBtn">✏️ Edit</button>
       <button class="btn small secondary" data-role="remove">Remove</button>
     </div>`;
   wrap.appendChild(card);
 
   q('[data-role=closeX]').addEventListener('click', ()=>{ selectedStoreId=null; render(); });
-  q('[data-role=markVisited]').addEventListener('click', ()=>{ store.lastChecked=new Date().toISOString().slice(0,10); save(); });
+  q('[data-role=markVisited]').addEventListener('click', ()=>{
+    store.lastChecked = store.lastChecked ? '' : new Date().toISOString().slice(0,10);
+    save();
+  });
   q('[data-role=favorite]').addEventListener('click', ()=>{ store.favorite=!store.favorite; save(); });
   q('[data-role=avoid]').addEventListener('click', ()=>{ store.avoid=!store.avoid; save(); });
   q('[data-role=editBtn]').addEventListener('click', ()=>{ editingId = store.id; render(); });
@@ -1006,12 +1054,18 @@ function renderStoreDetail(){
       save();
     }
   });
-  q('[data-role=photo]').addEventListener('change', e=>{
-    const file=e.target.files[0]; if(!file) return;
-    const reader=new FileReader();
-    reader.onload=()=>{ store.photos.push({ date:new Date().toISOString().slice(0,10), dataUrl:reader.result }); save(); };
-    reader.readAsDataURL(file);
-  });
+  function wirePhotoInput(inputEl){
+    inputEl.addEventListener('change', e=>{
+      const file=e.target.files[0]; if(!file) return;
+      const reader=new FileReader();
+      reader.onload=()=>{ store.photos.push({ date:new Date().toISOString().slice(0,10), dataUrl:reader.result }); save(); };
+      reader.readAsDataURL(file);
+    });
+  }
+  const photoInput = q('[data-role=photo]');
+  if(photoInput) wirePhotoInput(photoInput);
+  const placeholderInput = q('[data-role=photoPlaceholder]');
+  if(placeholderInput) wirePhotoInput(placeholderInput);
   const thumb = q('[data-role=photoThumb]');
   if(thumb) thumb.addEventListener('click', ()=> openLightbox(store.id, store.photos.length-1));
 }
@@ -1021,6 +1075,7 @@ function render(){
   updateMap();
   renderRouteList();
   renderStoreDetail();
+  document.querySelector('.tab-btn[data-tab="route"]').disabled = stores.length === 0;
   const routable = stores.filter(s=> !s.avoid && s.address);
   document.getElementById('routeCount').textContent = `${routable.length} stop${routable.length===1?'':'s'} available for the route`;
 }
@@ -1196,6 +1251,7 @@ document.getElementById('generateRouteBtn').addEventListener('click', async ()=>
   await drawRoute([start, ...ordered, end]);
   renderRouteList();
   document.getElementById('openMapsBtn').disabled = false;
+  document.getElementById('generateRouteBtn').disabled = true;
 });
 
 document.getElementById('openMapsBtn').addEventListener('click', ()=>{
