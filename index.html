@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>PegHunter</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎯</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -15,145 +15,137 @@
     --ink:#f2f0ec; --ink-soft:#a7a6ac;
     --flame1:#ffcc00; --flame2:#ff8a1a; --flame3:#ff3d1f;
     --hunt-orange:#ff6a1f; --hunt-orange-dark:#c8480f;
-    --checked-teal:#2fb7a6; --avoid-red:#e8393a; --fav-flame:#ff8a1a;
+    --green:#3ecf6e; --blue:#3b82f6; --red:#e8393a; --gray-avoid:#6b6b70;
     --line:#2a2a2e; --line-soft:#232326;
   }
   *{box-sizing:border-box;}
   body{margin:0; background:var(--bg); color:var(--ink); font-family:'Rajdhani',sans-serif; font-weight:500; -webkit-font-smoothing:antialiased;}
   .display{font-family:'Anton',sans-serif; letter-spacing:0.03em; text-transform:uppercase;}
   .mono{font-family:'IBM Plex Mono',monospace;}
+  input[type=checkbox]{width:21px; height:21px; accent-color:var(--hunt-orange);}
 
-  .flame-stripe{height:5px; background:linear-gradient(90deg, var(--flame1), var(--flame2), var(--flame3)); background-size:200% 100%;}
   .checker-stripe{height:6px; background-image:repeating-linear-gradient(90deg, #000 0 10px, #f2f0ec 10px 20px); opacity:0.9;}
 
-  header{display:flex; justify-content:space-between; align-items:center; padding:14px 22px; background:var(--bg-panel); flex-wrap:wrap; gap:12px; row-gap:10px;}
-  .brand{display:flex; align-items:baseline; gap:10px;}
-  .brand h1{font-family:'Anton',sans-serif; text-transform:uppercase; font-size:2rem; margin:0; letter-spacing:.02em;
+  header{display:grid; grid-template-columns:1fr auto 1fr; align-items:center; padding:14px 18px; background:var(--bg-panel);}
+  .header-spacer{}
+  header h1{font-family:'Anton',sans-serif; text-transform:uppercase; font-size:1.9rem; margin:0; text-align:center; letter-spacing:.02em;
     background:linear-gradient(90deg, var(--flame1), var(--flame2) 60%, var(--flame3)); -webkit-background-clip:text; background-clip:text; color:transparent;}
-  .mobile-toggles{display:none; gap:8px;}
-  .header-hunts{display:flex; align-items:center; gap:6px; flex-wrap:wrap;}
-  .header-hunts select{background:#0f0f11; color:var(--ink); border:1px solid #34343a; border-radius:6px; padding:6px 8px; font-size:0.8rem; max-width:160px; font-family:'Rajdhani',sans-serif;}
-  .header-hunts .btn-tiny{padding:6px 10px;}
-  .bomb-btn{background:none; border:1px solid var(--avoid-red); color:var(--avoid-red); border-radius:8px; font-size:0.82rem; font-weight:700; padding:7px 14px; cursor:pointer; white-space:nowrap;}
-  .donate-btn{background:linear-gradient(90deg, var(--flame1), var(--flame2)); color:#141416; font-weight:700; text-decoration:none; padding:8px 16px; border-radius:999px; font-size:0.85rem; border:none; box-shadow:0 2px 0 var(--hunt-orange-dark);}
-  .donate-btn:active{transform:translateY(1px); box-shadow:none;}
+  .hamburger-btn{justify-self:end; background:none; border:1px solid #34343a; color:var(--ink); border-radius:8px; font-size:1.3rem; padding:6px 12px; cursor:pointer;}
 
-  main{display:grid; grid-template-columns:300px 1fr 230px; min-height:calc(100vh - 90px);}
-  @media (max-width: 1100px){ main{grid-template-columns:280px 1fr;} }
-  @media (max-width: 820px){
-    main{grid-template-columns:1fr;}
-    .mobile-toggles{display:flex;}
-    .panel, .route-list-col{ position:fixed; top:0; bottom:0; width:85%; max-width:340px; z-index:500; transition:transform .25s ease; overflow-y:auto; box-shadow:0 0 30px rgba(0,0,0,.6); }
-    .panel{ left:0; transform:translateX(-105%); }
-    .route-list-col{ right:0; transform:translateX(105%); }
-    .panel.drawer-open{ transform:translateX(0); }
-    .route-list-col.drawer-open{ transform:translateX(0); }
-    input[type=checkbox]{ width:22px; height:22px; }
-    .chain-row label, .cat-head-label{ min-height:30px; }
-  }
-  .drawer-backdrop{ position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:400; display:none; }
-  .drawer-backdrop.show{ display:block; }
+  .menu-overlay{position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:590; display:none;}
+  .menu-overlay.show{display:block;}
+  .menu-drawer{position:fixed; top:0; right:0; bottom:0; width:86%; max-width:340px; background:var(--bg-panel); transform:translateX(105%); transition:transform .25s ease; z-index:600; overflow-y:auto; padding:20px; box-shadow:-8px 0 30px rgba(0,0,0,.6);}
+  .menu-drawer.open{transform:translateX(0);}
+  .menu-drawer h2{font-family:'Anton',sans-serif; text-transform:uppercase; font-size:1.05rem; letter-spacing:.04em; color:var(--flame2); margin:18px 0 8px; border-bottom:1px solid var(--line); padding-bottom:6px;}
+  .menu-drawer h2:first-of-type{margin-top:6px;}
+  .menu-close{position:absolute; top:14px; right:14px; background:none; border:none; color:var(--ink); font-size:1.3rem; cursor:pointer;}
+  .guide-list{margin:0; padding-left:20px; font-size:0.86rem; color:var(--ink-soft); line-height:1.6;}
+  .guide-list li{margin-bottom:8px;}
 
-  .panel{background:var(--bg-panel); padding:18px; border-right:1px solid var(--line);}
-  @media (max-width: 820px){ .panel{border-right:none;} }
-  .panel h2{font-family:'Anton',sans-serif; text-transform:uppercase; font-size:1.15rem; letter-spacing:.04em; color:var(--flame2); margin:0 0 8px; border-bottom:1px solid var(--line); padding-bottom:7px;}
-  .field{margin-bottom:13px;}
-  .field label{display:block; font-size:0.72rem; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-soft); margin-bottom:5px;}
-  .field label.plain{text-transform:none; letter-spacing:0; display:flex; align-items:center; gap:6px; cursor:pointer;}
-  .field input[type=text], .field input[type=number], .field select, .field textarea{
-    width:100%; padding:8px 9px; border-radius:6px; border:1px solid #34343a; background:#0f0f11; color:var(--ink); font-family:'Rajdhani',sans-serif; font-size:0.92rem;
-  }
-  .field input[type=range]{width:100%;}
-  .radius-val{font-family:'IBM Plex Mono',monospace; color:var(--flame2); font-weight:600;}
-  .status-text{font-size:0.68rem; color:var(--ink-soft); margin-top:4px; display:block; min-height:1em;}
-  .inline-row{display:flex; gap:6px;}
-  .inline-row input{flex:1;}
-  .btn-tiny{background:none; border:1px solid #34343a; color:#d7d6db; border-radius:6px; font-size:0.74rem; padding:0 10px; cursor:pointer; white-space:nowrap;}
+  main.stack{max-width:640px; margin:0 auto; padding:16px; display:flex; flex-direction:column; gap:14px;}
 
-  .hunt-cta-panel{
-    display:block; width:100%; background:linear-gradient(90deg, var(--flame1), var(--flame2), var(--flame3)); color:#141416; font-family:'Anton',sans-serif; text-transform:uppercase;
-    letter-spacing:.06em; font-size:1.35rem; border:none; border-radius:8px; padding:13px; cursor:pointer; margin-bottom:16px;
-    box-shadow:0 3px 0 var(--hunt-orange-dark), 0 0 20px rgba(255,106,31,0.35);
-  }
-  .hunt-cta-panel:active{transform:translateY(2px); box-shadow:0 1px 0 var(--hunt-orange-dark);}
-  .hunt-cta-panel:disabled{opacity:0.55; cursor:not-allowed;}
-  .hint-text{font-size:0.72rem; color:var(--ink-soft); margin:-4px 0 10px;}
+  .location-row{display:flex; gap:8px;}
+  .location-row input{flex:1; padding:11px 12px; border-radius:8px; border:1px solid #34343a; background:#0f0f11; color:var(--ink); font-family:'Rajdhani',sans-serif; font-size:16px;}
+  .status-text{font-size:0.72rem; color:var(--ink-soft); margin-top:4px; display:block; min-height:1em;}
 
-  .cat-group{margin-bottom:11px; border:1px solid var(--line); border-radius:8px; overflow:hidden;}
-  .cat-head{display:flex; align-items:center; justify-content:space-between; padding:10px 11px; background:var(--card-2); cursor:pointer; user-select:none;}
-  .cat-head-label{display:flex; align-items:center; gap:8px;}
-  .cat-head strong{font-size:0.86rem;}
-  .mini-refresh{background:none; border:1px solid #34343a; color:var(--ink-soft); border-radius:4px; font-size:0.68rem; padding:2px 6px; cursor:pointer;}
-  .chain-list{padding:8px 11px; display:none;}
-  .cat-group.open .chain-list{display:block;}
-  .chain-row{display:flex; align-items:center; justify-content:space-between; gap:8px; padding:7px 0; font-size:0.85rem; border-bottom:1px dashed var(--line); flex-wrap:wrap;}
-  .chain-row:last-child{border-bottom:none;}
-  .chain-row label{display:flex; align-items:center; gap:8px; cursor:pointer;}
-  .chain-status{font-size:0.66rem; color:var(--ink-soft);}
-  .find-link{color:var(--flame2); font-size:0.68rem; text-decoration:none;}
-  .find-link:hover{text-decoration:underline;}
-
-  .cartype-chip{display:inline-flex; align-items:center; gap:5px; background:#0f0f11; border:1px solid #34343a; border-radius:999px; padding:3px 6px 3px 10px; font-size:0.76rem; margin:0 5px 5px 0;}
-  .cartype-remove{background:none; border:none; color:var(--ink-soft); cursor:pointer; font-size:0.75rem; padding:0 2px;}
-
-  .btn{display:inline-block; background:var(--hunt-orange); color:#141416; font-weight:700; border:none; padding:9px 15px; border-radius:6px; cursor:pointer; font-size:0.85rem; font-family:'Rajdhani',sans-serif;}
-  .btn.secondary{background:transparent; color:var(--flame2); border:1px solid var(--flame2);}
-  .btn.small{padding:6px 10px; font-size:0.76rem;}
-  .btn.teal{background:var(--checked-teal); color:#08201d;}
-  .btn.red{background:transparent; color:var(--avoid-red); border:1px solid var(--avoid-red);}
-  .btn.fav-active{background:var(--fav-flame); color:#141416;}
-  .btn:disabled{opacity:0.4; cursor:not-allowed;}
-
-  .content{padding:18px 22px; min-width:0;}
-  .content-head{display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:12px; margin-bottom:12px;}
-  .content-head h2{font-family:'Anton',sans-serif; text-transform:uppercase; font-size:1.5rem; letter-spacing:.03em; margin:0; color:var(--ink);}
-  .content-head p{margin:2px 0 0; color:var(--ink-soft); font-size:0.85rem;}
-
-  #map{height:330px; border-radius:10px; border:1px solid var(--line); margin-bottom:18px; background:#0f0f11;}
+  .map-wrap{position:relative;}
+  #map{height:360px; border-radius:10px; border:1px solid var(--line); background:#0f0f11;}
+  .map-theme-btn{position:absolute; top:10px; right:10px; z-index:450; background:var(--bg-panel); border:1px solid var(--line); color:var(--ink); border-radius:8px; padding:7px 10px; font-size:1.1rem; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,.4);}
   .leaflet-popup-content-wrapper{background:#1b1b1e; color:var(--ink);}
   .leaflet-popup-tip{background:#1b1b1e;}
   .leaflet-popup-content{font-family:'Rajdhani',sans-serif; font-size:0.9rem;}
   .leaflet-popup-content a{color:var(--flame2); font-weight:700;}
   .route-num-badge{background:var(--hunt-orange); color:#141416; border-radius:50%; width:22px; height:22px; display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono',monospace; font-weight:700; font-size:0.7rem; border:2px solid #0b0b0d;}
+  @keyframes pulseGlow{ 0%,100%{ opacity:0.12; } 50%{ opacity:0.6; } }
+  .pulse-marker{ animation: pulseGlow 1.6s ease-in-out infinite; }
 
-  .empty{border:1px dashed #34343a; border-radius:10px; padding:34px 20px; text-align:center; color:var(--ink-soft);}
+  .tab-buttons{display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;}
+  .tab-btn{background:var(--card-2); border:1px solid var(--line); color:var(--ink); border-radius:8px; padding:12px 6px; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:0.86rem; cursor:pointer; text-align:center;}
+  .tab-btn.active{background:linear-gradient(90deg, var(--flame1), var(--flame2)); color:#141416; border-color:transparent;}
 
-  .store-detail-wrap{max-width:460px;}
-  .store-card{background:var(--card); color:var(--ink); border-radius:8px; position:relative; padding:20px 20px 16px; border:1px solid var(--line); border-left:5px solid var(--hunt-orange); overflow:hidden;}
+  .tab-panel{display:none; background:var(--bg-panel); border:1px solid var(--line); border-radius:10px; padding:16px;}
+  .tab-panel.open{display:block;}
+  .tab-panel h3{font-family:'Anton',sans-serif; text-transform:uppercase; font-size:1rem; letter-spacing:.04em; color:var(--flame2); margin:16px 0 8px; border-bottom:1px solid var(--line); padding-bottom:6px;}
+  .tab-panel h3:first-child{margin-top:0;}
+
+  .field{margin-bottom:13px;}
+  .field label{display:block; font-size:0.72rem; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-soft); margin-bottom:5px;}
+  .field label.plain{text-transform:none; letter-spacing:0; display:flex; align-items:center; gap:8px; cursor:pointer;}
+  .field input[type=text], .field input[type=number], .field select, .field textarea{
+    width:100%; padding:10px 10px; border-radius:6px; border:1px solid #34343a; background:#0f0f11; color:var(--ink); font-family:'Rajdhani',sans-serif; font-size:16px;
+  }
+  .field input[type=range]{width:100%;}
+  .radius-val{font-family:'IBM Plex Mono',monospace; color:var(--flame2); font-weight:600;}
+  .inline-row{display:flex; gap:6px;}
+  .inline-row input{flex:1;}
+  .btn-tiny{background:none; border:1px solid #34343a; color:#d7d6db; border-radius:6px; font-size:0.78rem; padding:8px 12px; cursor:pointer; white-space:nowrap;}
+
+  .hunt-cta-panel{
+    display:block; width:100%; background:linear-gradient(90deg, var(--flame1), var(--flame2), var(--flame3)); color:#141416; font-family:'Anton',sans-serif; text-transform:uppercase;
+    letter-spacing:.06em; font-size:1.35rem; border:none; border-radius:8px; padding:14px; cursor:pointer; margin-bottom:16px;
+    box-shadow:0 3px 0 var(--hunt-orange-dark), 0 0 20px rgba(255,106,31,0.35);
+  }
+  .hunt-cta-panel:active{transform:translateY(2px); box-shadow:0 1px 0 var(--hunt-orange-dark);}
+  .hunt-cta-panel:disabled{opacity:0.55; cursor:not-allowed;}
+  .hint-text{font-size:0.74rem; color:var(--ink-soft); margin:-4px 0 10px;}
+
+  .cat-group{margin-bottom:11px; border:1px solid var(--line); border-radius:8px; overflow:hidden;}
+  .cat-head{display:flex; align-items:center; justify-content:space-between; padding:11px; background:var(--card-2); cursor:pointer; user-select:none;}
+  .cat-head-label{display:flex; align-items:center; gap:10px;}
+  .cat-head strong{font-size:0.88rem;}
+  .mini-refresh{background:none; border:1px solid #34343a; color:var(--ink-soft); border-radius:4px; font-size:0.7rem; padding:4px 8px; cursor:pointer;}
+  .chain-list{padding:8px 11px; display:none;}
+  .cat-group.open .chain-list{display:block;}
+  .chain-row{display:flex; align-items:center; justify-content:space-between; gap:8px; padding:9px 0; font-size:0.88rem; border-bottom:1px dashed var(--line); flex-wrap:wrap;}
+  .chain-row:last-child{border-bottom:none;}
+  .chain-row label{display:flex; align-items:center; gap:10px; cursor:pointer;}
+  .chain-status{font-size:0.68rem; color:var(--ink-soft);}
+  .find-link{color:var(--flame2); font-size:0.7rem; text-decoration:none;}
+  .find-link:hover{text-decoration:underline;}
+
+  .cartype-chip{display:inline-flex; align-items:center; gap:5px; background:#0f0f11; border:1px solid #34343a; border-radius:999px; padding:5px 8px 5px 12px; font-size:0.8rem; margin:0 6px 6px 0;}
+  .cartype-remove{background:none; border:none; color:var(--ink-soft); cursor:pointer; font-size:0.8rem; padding:0 2px;}
+
+  .btn{display:inline-block; background:var(--hunt-orange); color:#141416; font-weight:700; border:none; padding:11px 16px; border-radius:6px; cursor:pointer; font-size:0.88rem; font-family:'Rajdhani',sans-serif;}
+  .btn.secondary{background:transparent; color:var(--flame2); border:1px solid var(--flame2);}
+  .btn.small{padding:7px 11px; font-size:0.8rem;}
+  .btn.teal{background:var(--green); color:#08201d;}
+  .btn.red{background:transparent; color:var(--red); border:1px solid var(--red);}
+  .btn.fav-active{background:var(--flame2); color:#141416;}
+  .btn:disabled{opacity:0.4; cursor:not-allowed;}
+  .btn-row{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px;}
+
+  .empty{border:1px dashed #34343a; border-radius:10px; padding:30px 18px; text-align:center; color:var(--ink-soft);}
+
+  .store-card{background:var(--card); color:var(--ink); border-radius:8px; position:relative; padding:20px 20px 16px; border:1px solid var(--line); border-left:6px solid var(--red); overflow:hidden;}
   .store-card::before{content:''; position:absolute; top:0; left:0; right:0; height:5px; background:linear-gradient(90deg, var(--flame1), var(--flame2), var(--flame3));}
-  .store-card.avoided{border-left-color:var(--avoid-red);}
-  .store-card .tab{position:absolute; top:12px; right:14px; background:var(--card-2); color:var(--ink-soft); font-family:'IBM Plex Mono',monospace; font-size:0.62rem; padding:3px 9px; border-radius:3px; text-transform:uppercase; letter-spacing:.05em; font-weight:600; border:1px solid var(--line);}
-  .store-card h3{font-family:'Anton',sans-serif; text-transform:uppercase; font-size:1.5rem; margin:8px 0 4px; letter-spacing:.02em;}
-  .store-card .addr{font-size:0.82rem; color:var(--ink-soft); margin-bottom:8px; word-break:break-word;}
+  .store-card .close-x{position:absolute; top:12px; right:14px; background:none; border:none; color:var(--ink-soft); font-size:1.2rem; cursor:pointer;}
+  .store-card .tab{position:absolute; top:12px; left:14px; background:var(--card-2); color:var(--ink-soft); font-family:'IBM Plex Mono',monospace; font-size:0.62rem; padding:3px 9px; border-radius:3px; text-transform:uppercase; letter-spacing:.05em; font-weight:600; border:1px solid var(--line);}
+  .store-card h3{font-family:'Anton',sans-serif; text-transform:uppercase; font-size:1.5rem; margin:30px 0 4px; letter-spacing:.02em;}
+  .store-card .addr{font-size:0.84rem; color:var(--ink-soft); margin-bottom:8px; word-break:break-word;}
+  .status-pill{display:inline-block; font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; padding:4px 10px; border-radius:999px; margin-bottom:10px;}
   .tag-badges{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px;}
-  .tag-badge{font-size:0.68rem; background:var(--card-2); padding:4px 9px; border-radius:999px; border:1px solid var(--line); color:var(--flame2); font-weight:600;}
-  .stamp{position:absolute; top:12px; left:14px; width:0; height:0;}
-  .meta-line{font-size:0.78rem; color:var(--ink-soft); margin-bottom:6px;}
-  .overdue{color:var(--avoid-red); font-weight:700; font-size:0.72rem; margin-left:4px;}
-  textarea.notes{width:100%; min-height:56px; font-family:'Rajdhani',sans-serif; font-size:0.85rem; padding:8px 9px; border:1px solid var(--line); border-radius:6px; resize:vertical; background:#0f0f11; color:var(--ink-soft);}
-  .peg-photo{width:100%; max-height:180px; object-fit:cover; border-radius:6px; margin-bottom:10px; border:1px solid var(--line); cursor:pointer;}
-  .card-actions{display:flex; gap:7px; flex-wrap:wrap; margin-top:12px;}
-  .card-actions label.upload{background:transparent; color:var(--ink-soft); border:1px solid var(--line); border-radius:6px; padding:6px 10px; font-size:0.76rem; cursor:pointer;}
+  .tag-badge{font-size:0.7rem; background:var(--card-2); padding:4px 9px; border-radius:999px; border:1px solid var(--line); color:var(--flame2); font-weight:600;}
+  .meta-line{font-size:0.8rem; color:var(--ink-soft); margin-bottom:6px;}
+  .overdue{color:var(--red); font-weight:700; font-size:0.74rem; margin-left:4px;}
+  textarea.notes{width:100%; min-height:56px; font-family:'Rajdhani',sans-serif; font-size:0.9rem; padding:9px 10px; border:1px solid var(--line); border-radius:6px; resize:vertical; background:#0f0f11; color:var(--ink-soft);}
+  .peg-photo{width:100%; max-height:200px; object-fit:cover; border-radius:6px; margin-bottom:10px; border:1px solid var(--line); cursor:pointer;}
+  .card-actions{display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;}
+  .card-actions label.upload{background:transparent; color:var(--ink-soft); border:1px solid var(--line); border-radius:6px; padding:7px 11px; font-size:0.8rem; cursor:pointer;}
 
-  .route-bar{position:sticky; bottom:0; margin-top:20px; background:var(--bg-panel); border:1px solid var(--line); border-radius:10px; padding:15px 17px; display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:14px;}
-  .route-controls{display:flex; gap:14px; flex-wrap:wrap;}
-  .rc-field{min-width:175px;}
-  .rc-field label{display:block; font-size:0.66rem; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-soft); margin-bottom:4px;}
-  .rc-field select, .rc-field input[type=text]{width:100%; padding:7px 8px; border-radius:6px; border:1px solid #34343a; background:#0f0f11; color:var(--ink); font-size:0.85rem;}
-  .route-summary{display:flex; flex-direction:column; align-items:flex-end; gap:8px;}
-  .route-summary .count{color:var(--ink-soft); font-size:0.76rem; text-align:right;}
-  .route-summary .btn-row{display:flex; gap:8px; flex-wrap:wrap;}
-
-  .route-list-col{padding:18px 12px; background:var(--bg-panel);}
-  .route-list-col h2{font-family:'Anton',sans-serif; text-transform:uppercase; font-size:1.05rem; letter-spacing:.04em; color:var(--flame2); margin:0 0 6px; border-bottom:1px solid var(--line); padding-bottom:7px;}
-  .route-list-item{background:#0f0f11; border-left:5px solid var(--hunt-orange); padding:8px 10px; border-radius:4px; margin-bottom:7px; font-size:0.8rem; cursor:pointer; display:flex; align-items:center; gap:7px;}
-  .route-list-item:hover{background:#191a1d;}
-  .route-list-item.dragging{opacity:0.4;}
+  .route-list-item{background:#0f0f11; border-left:5px solid var(--hunt-orange); padding:9px 10px; border-radius:4px; margin-bottom:8px; font-size:0.84rem; display:flex; align-items:center; gap:8px;}
   .route-list-item.selected{outline:2px solid var(--flame2);}
-  .drag-handle{cursor:grab; color:#6a6a72; font-size:0.95rem;}
-  .rli-label{flex:1;}
+  .rli-label{flex:1; cursor:pointer;}
+  .rli-move{display:flex; gap:3px;}
+  .rli-move button{background:var(--card-2); border:1px solid var(--line); color:var(--ink); border-radius:4px; width:26px; height:26px; cursor:pointer; font-size:0.85rem;}
+  .rli-move button:disabled{opacity:0.3; cursor:not-allowed;}
 
-  footer{text-align:center; padding:22px 10px 32px; color:#57565c; font-size:0.72rem;}
+  .target-row{background:#0f0f11; border-left:5px solid var(--line); padding:10px; border-radius:4px; margin-bottom:8px; display:flex; align-items:center; gap:10px;}
+  .target-row.found{border-left-color:var(--green);}
+  .target-row .rli-label{cursor:pointer;}
+  .target-row.found .rli-label{text-decoration:line-through; color:var(--ink-soft);}
+
+  footer{text-align:center; padding:20px 10px 34px; color:#57565c; font-size:0.72rem;}
 
   .lightbox-overlay{position:fixed; inset:0; background:rgba(4,4,5,0.92); display:none; align-items:center; justify-content:center; z-index:9999; padding:20px;}
   .lightbox-frame{background:var(--bg-panel); border-radius:10px; border:6px solid #0b0b0d; max-width:640px; width:100%; overflow:hidden; box-shadow:0 10px 40px rgba(0,0,0,0.7);}
@@ -168,41 +160,65 @@
 <body>
 
 <header>
-  <div class="brand">
-    <h1>🎯 PegHunter</h1>
-  </div>
+  <div class="header-spacer"></div>
+  <h1>🎯 PegHunter</h1>
+  <button class="hamburger-btn" id="menuBtn">☰</button>
+</header>
+<div class="checker-stripe"></div>
 
-  <div class="mobile-toggles">
-    <button class="btn-tiny" id="openSetupBtnM">☰ Setup</button>
-    <button class="btn-tiny" id="openRouteBtnM">📋 Route</button>
-  </div>
+<div class="menu-overlay" id="menuOverlay"></div>
+<div class="menu-drawer" id="menuDrawer">
+  <button class="menu-close" id="menuCloseBtn">✕</button>
 
-  <div class="header-hunts">
-    <select id="huntSelect"><option value="">— saved hunts —</option></select>
+  <h2>Saved Hunts</h2>
+  <select id="huntSelect" style="width:100%;margin-bottom:8px;"><option value="">— saved hunts —</option></select>
+  <div class="btn-row">
     <button class="btn-tiny" id="loadHuntBtn">Load</button>
     <button class="btn-tiny" id="deleteHuntBtn">Delete</button>
     <button class="btn-tiny" id="saveHuntBtn">💾 Save Hunt</button>
   </div>
 
-  <button class="bomb-btn" id="bombBtn" title="Permanently clears every saved store, note, photo, and saved hunt">💣 Clear All Data</button>
-  <a class="donate-btn" id="donateBtn" href="https://paypal.me/ZachEason23" target="_blank" rel="noopener">☕ Donate</a>
-</header>
-<div class="checker-stripe"></div>
-<div class="drawer-backdrop" id="drawerBackdrop"></div>
+  <h2>Data</h2>
+  <button class="btn-tiny" id="bombBtn" style="border-color:var(--red);color:var(--red);width:100%;">💣 Clear All Data</button>
 
-<main>
-  <div class="panel" id="setupPanel">
+  <h2>Support</h2>
+  <a id="donateBtn" href="https://paypal.me/ZachEason23" target="_blank" rel="noopener" class="btn" style="display:block;text-align:center;text-decoration:none;">☕ Donate</a>
+
+  <h2>Quick Guide</h2>
+  <ol class="guide-list">
+    <li>Set your location above the map (type it, or tap "Pick on map").</li>
+    <li>Open <strong>Hunt Setup</strong> — check store types, set Start/End, tap HUNT!.</li>
+    <li>Tap a map pin, or an item in Route Details, to see that store's card.</li>
+    <li>Open <strong>Route Details</strong> to generate your route and send it to Google Maps.</li>
+    <li>Track wishlist cars in <strong>🔥 Hot List</strong>.</li>
+  </ol>
+</div>
+
+<main class="stack">
+  <section class="location-row">
+    <input type="text" id="centerInput" placeholder="e.g. 35749 or Huntsville, AL">
+    <button class="btn-tiny" id="pickCenterBtn">📍 Pick on map</button>
+  </section>
+  <span class="status-text" id="centerStatus"></span>
+
+  <div class="map-wrap">
+    <div id="map"></div>
+    <button class="map-theme-btn" id="mapThemeBtn" title="Toggle day/night map">☀️</button>
+  </div>
+
+  <div id="storeDetail"></div>
+  <div id="emptyState" class="empty">Tap a pin on the map, or a store in Route Details, to see it here.</div>
+
+  <div class="tab-buttons">
+    <button class="tab-btn" data-tab="setup">🔧 Hunt Setup</button>
+    <button class="tab-btn" data-tab="route">🧭 Route Details</button>
+    <button class="tab-btn" data-tab="notes">🔥 Hot List</button>
+  </div>
+
+  <section class="tab-panel" id="panel-setup">
     <button class="hunt-cta-panel" id="huntBtn">🎯 HUNT!</button>
 
-    <h2>Hunt Setup</h2>
-    <div class="field">
-      <label for="centerInput">Search center (zip, city, address, or cross streets)</label>
-      <div class="inline-row">
-        <input type="text" id="centerInput" placeholder="e.g. 35749 or Huntsville, AL">
-        <button class="btn-tiny" id="pickCenterBtn">📍 Pick on map</button>
-      </div>
-      <span class="status-text" id="centerStatus"></span>
-    </div>
+    <h3>Radius &amp; Home</h3>
     <div class="field">
       <label for="radius">Search radius <span class="radius-val" id="radiusVal">10 mi</span></label>
       <input type="range" id="radius" min="1" max="50" value="10">
@@ -211,6 +227,20 @@
       <label for="homeAddress">Home address (for route start/end)</label>
       <input type="text" id="homeAddress" placeholder="Your address">
     </div>
+
+    <h3>Route Start / End</h3>
+    <div class="field">
+      <label>Start</label>
+      <select id="startSelect"></select>
+      <input type="text" id="startAddrInput" placeholder="Enter start address" style="display:none;margin-top:6px;">
+    </div>
+    <div class="field">
+      <label>End</label>
+      <select id="endSelect"></select>
+      <input type="text" id="endAddrInput" placeholder="Enter end address" style="display:none;margin-top:6px;">
+    </div>
+
+    <h3>Filters</h3>
     <div class="field">
       <label for="seriesFilter">Filter route/display by car type</label>
       <select id="seriesFilter"></select>
@@ -219,18 +249,18 @@
       <label class="plain"><input type="checkbox" id="favoritesOnly"> 🔥 Only show/route favorites</label>
     </div>
 
-    <h2 style="margin-top:16px;">Store Groups</h2>
-    <p class="hint-text">Check the chains you want, then press HUNT! up top. Unchecking never deletes stores you've already found.</p>
+    <h3>Store Groups</h3>
+    <p class="hint-text">Check the chains you want, then press HUNT! above. Unchecking never deletes stores you've already found.</p>
     <div id="catGroups"></div>
 
-    <h2 style="margin-top:16px;">Car Types to Track</h2>
+    <h3>Car Types to Track</h3>
     <div id="carTypeList"></div>
     <div class="inline-row">
       <input type="text" id="newCarType" placeholder="e.g. Johnny Lightning">
       <button class="btn-tiny" id="addCarTypeBtn">+ Add</button>
     </div>
 
-    <h2 style="margin-top:16px;">Custom Store</h2>
+    <h3>Custom Store</h3>
     <div class="field"><label>Name</label><input type="text" id="customName" placeholder="e.g. Joe's Hardware"></div>
     <div class="field">
       <label>Category</label>
@@ -241,49 +271,29 @@
     </div>
     <div class="field"><label>Address</label><input type="text" id="customAddr" placeholder="Street, City, State"></div>
     <button class="btn" id="addCustomBtn">+ Add Custom Store</button>
-  </div>
+  </section>
 
-  <div class="content">
-    <div class="content-head">
-      <div><h2>Your Hunt Map</h2><p id="listSub">No stores yet.</p></div>
+  <section class="tab-panel" id="panel-route">
+    <div class="btn-row">
+      <button class="btn secondary" id="generateRouteBtn">🧭 Generate Route</button>
+      <button class="btn teal" id="openMapsBtn" disabled>📲 Open in Google Maps</button>
+      <button class="btn small secondary" id="clearBoardBtn">🧹 Clear board</button>
     </div>
-
-    <div id="map"></div>
-
-    <div class="store-detail-wrap" id="storeDetail"></div>
-    <div id="emptyState" class="empty">Select a store from the map or the Route Order list to see its details here.</div>
-
-    <div class="route-bar">
-      <div class="route-controls">
-        <div class="rc-field">
-          <label>Start</label>
-          <select id="startSelect"></select>
-          <input type="text" id="startAddrInput" placeholder="Enter start address" style="display:none;margin-top:6px;">
-        </div>
-        <div class="rc-field">
-          <label>End</label>
-          <select id="endSelect"></select>
-          <input type="text" id="endAddrInput" placeholder="Enter end address" style="display:none;margin-top:6px;">
-        </div>
-        <div class="rc-field" style="align-self:flex-end;">
-          <button class="btn small secondary" id="clearBoardBtn">🧹 Clear board</button>
-        </div>
-      </div>
-      <div class="route-summary">
-        <span class="count" id="routeCount">0 stops ready</span>
-        <div class="btn-row">
-          <button class="btn secondary" id="generateRouteBtn">🧭 Generate Route</button>
-          <button class="btn teal" id="openMapsBtn" disabled>📲 Open in Google Maps</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="route-list-col" id="routeCol">
-    <h2>Route Order</h2>
-    <p class="hint-text">Click a store to view it. Drag ⠿ to reorder stops.</p>
+    <p class="hint-text" id="routeCount">0 stops ready</p>
+    <h3>Route Order</h3>
+    <p class="hint-text">Tap a store to view it. Use ▲▼ to reorder stops.</p>
     <div id="routeListPanel"></div>
-  </div>
+  </section>
+
+  <section class="tab-panel" id="panel-notes">
+    <h3>🔥 Hot List — cars you're hunting for</h3>
+    <div class="inline-row" style="margin-bottom:12px;">
+      <input type="text" id="newTargetName" placeholder="e.g. '67 Camaro — Super Treasure Hunt">
+      <button class="btn-tiny" id="addTargetBtn">+ Add</button>
+    </div>
+    <div id="targetList"></div>
+    <div id="targetDetail"></div>
+  </section>
 </main>
 
 <footer>PegHunter stores everything locally in this browser — nothing is sent to a server except free map/search lookups (OpenStreetMap + OSRM).</footer>
@@ -319,9 +329,6 @@ const PRESET_GROUPS = [
 ];
 const DEFAULT_CAR_TYPES = ['Silver Series','Premium','Mainline','Matchbox'];
 const STREET_SUFFIXES = ['Drive','Dr','Street','St','Road','Rd','Avenue','Ave','Boulevard','Blvd','Lane','Ln','Parkway','Pkwy','Highway','Hwy','Way','Court','Ct','Circle','Cir','Trail','Trl','Place','Pl','Loop'];
-
-// Baseline assumptions for what each chain typically carries — a starting point, not a guarantee.
-// Edit any individual store's tags any time; these only apply the moment a store is first discovered.
 const CHAIN_DEFAULT_TAGS = {
   'Walmart': { 'Mainline':true, 'Silver Series':true, 'Premium':true, 'Matchbox':true },
   'Target': { 'Mainline':true, 'Silver Series':false, 'Premium':true, 'Matchbox':true },
@@ -339,10 +346,13 @@ const CHAIN_DEFAULT_TAGS = {
 let stores = JSON.parse(storage.get('ph_stores') || '[]');
 let hunts = JSON.parse(storage.get('ph_hunts') || '[]');
 let carTypes = JSON.parse(storage.get('ph_cartypes') || JSON.stringify(DEFAULT_CAR_TYPES));
+let targets = JSON.parse(storage.get('ph_targets') || '[]');
 let searchCenter = null, lastGeocodedCenterText = null;
 let homeCoord = null;
 let editingId = null;
 let selectedStoreId = null;
+let selectedTargetId = null;
+let editingTargetId = null;
 let currentRoute = null;
 let pickingCenter = false;
 let lightboxState = null;
@@ -350,6 +360,7 @@ let lightboxState = null;
 function save(){ storage.set('ph_stores', JSON.stringify(stores)); render(); }
 function saveHunts(){ storage.set('ph_hunts', JSON.stringify(hunts)); populateHuntSelect(); }
 function saveCarTypes(){ storage.set('ph_cartypes', JSON.stringify(carTypes)); }
+function saveTargets(){ storage.set('ph_targets', JSON.stringify(targets)); renderTargets(); }
 function esc(str){ return (str||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
 function setCenterStatus(t){ document.getElementById('centerStatus').textContent = t; }
 
@@ -383,6 +394,23 @@ function isDuplicateLocation(chain, lat, lon){
   return stores.some(s=> s.chain===chain && s.lat!=null && s.lon!=null && haversineMiles({lat,lon},{lat:s.lat,lon:s.lon}) < 0.07);
 }
 
+/* ---------- store status (drives card + map pin color) ---------- */
+function getStoreStatus(store){
+  if(store.avoid) return { color:'var(--gray-avoid)', label:'Avoided' };
+  const today = new Date().toISOString().slice(0,10);
+  if(store.restockDay && store.restockDay <= today) return { color:'var(--blue)', label:'Restock day reached' };
+  if(!store.lastChecked) return { color:'var(--red)', label:'Never hunted' };
+  const daysSince = Math.floor((Date.now() - new Date(store.lastChecked).getTime())/86400000);
+  if(daysSince > 7) return { color:'var(--flame1)', label:'Stale — recheck' };
+  return { color:'var(--green)', label:'Freshly hunted' };
+}
+function resolvedColor(cssVar){
+  // convert "var(--x)" to an actual hex for Leaflet, which can't read CSS variables
+  const map = { '--gray-avoid':'#6b6b70', '--blue':'#3b82f6', '--red':'#e8393a', '--flame1':'#ffcc00', '--green':'#3ecf6e' };
+  const key = cssVar.replace('var(','').replace(')','');
+  return map[key] || '#ff6a1f';
+}
+
 /* ---------- migration for stores saved by earlier versions ---------- */
 function migrateStores(){
   let changed = false;
@@ -406,7 +434,7 @@ function migrateStores(){
   });
 }
 
-/* ---------- request throttling, per service so one slow domain doesn't stall another ---------- */
+/* ---------- request throttling, per service ---------- */
 const throttleState = { nominatim:0, overpass:0, osrm:0 };
 async function throttle(key, minGap){
   const now = Date.now();
@@ -504,7 +532,7 @@ async function searchChain(chain, groupLabel){
   }
 }
 
-/* ---------- build left-panel groups ---------- */
+/* ---------- build Hunt Setup groups ---------- */
 const catGroupsEl = document.getElementById('catGroups');
 PRESET_GROUPS.forEach(group=>{
   const wrap = document.createElement('div');
@@ -517,7 +545,7 @@ PRESET_GROUPS.forEach(group=>{
       </label>
       <div style="display:flex;align-items:center;gap:8px;">
         <button class="mini-refresh" data-group="${group.id}" title="Search checked chains in this group right now">🔍</button>
-        <span class="mono toggle-arrow" style="font-size:.75rem;color:var(--ink-soft);">▸</span>
+        <span class="mono toggle-arrow" style="font-size:.8rem;color:var(--ink-soft);">▸</span>
       </div>
     </div>
     <div class="chain-list">
@@ -568,12 +596,12 @@ function syncChainCheckboxes(){
   });
 }
 
-/* ---------- HUNT! button: runs every checked chain, one at a time ---------- */
+/* ---------- HUNT! button ---------- */
 document.getElementById('huntBtn').addEventListener('click', async ()=>{
   const center = await ensureSearchCenter();
   if(!center) return;
   const checked = Array.from(document.querySelectorAll('input[data-chain]:checked'));
-  if(checked.length===0){ alert('Check at least one store type on the left first.'); return; }
+  if(checked.length===0){ alert('Check at least one store type first.'); return; }
   const btn = document.getElementById('huntBtn');
   const original = btn.textContent;
   btn.disabled = true;
@@ -633,18 +661,26 @@ document.getElementById('homeAddress').addEventListener('change', async ()=>{
   updateMap();
 });
 
+/* ---------- hamburger menu ---------- */
+function openMenu(){ document.getElementById('menuDrawer').classList.add('open'); document.getElementById('menuOverlay').classList.add('show'); }
+function closeMenu(){ document.getElementById('menuDrawer').classList.remove('open'); document.getElementById('menuOverlay').classList.remove('show'); }
+document.getElementById('menuBtn').addEventListener('click', openMenu);
+document.getElementById('menuCloseBtn').addEventListener('click', closeMenu);
+document.getElementById('menuOverlay').addEventListener('click', closeMenu);
+
 /* ---------- bomb: full wipe ---------- */
 document.getElementById('bombBtn').addEventListener('click', ()=>{
-  if(confirm('💣 This permanently deletes every saved store, note, photo, and saved hunt on this device. Are you sure?')){
-    stores = []; hunts = [];
-    storage.set('ph_stores', '[]'); storage.set('ph_hunts', '[]');
+  if(confirm('💣 This permanently deletes every saved store, note, photo, target, and saved hunt on this device. Are you sure?')){
+    stores = []; hunts = []; targets = [];
+    storage.set('ph_stores', '[]'); storage.set('ph_hunts', '[]'); storage.set('ph_targets', '[]');
     document.querySelectorAll('.chain-list input[type=checkbox]').forEach(cb=>{ cb.checked=false; });
     document.querySelectorAll('.cat-select-all').forEach(cb=>{ cb.checked=false; cb.indeterminate=false; });
-    currentRoute = null; selectedStoreId = null;
+    currentRoute = null; selectedStoreId = null; selectedTargetId = null;
     if(routeLayer) routeLayer.clearLayers();
     document.getElementById('openMapsBtn').disabled = true;
     populateHuntSelect();
-    render();
+    render(); renderTargets();
+    closeMenu();
   }
 });
 
@@ -680,7 +716,7 @@ document.getElementById('saveHuntBtn').addEventListener('click', ()=>{
     createdAt: new Date().toISOString().slice(0,10)
   });
   saveHunts();
-  alert(`Saved "${name}". Press HUNT! after loading it to run the searches.`);
+  alert(`Saved "${name}". Load it later, then press HUNT! to run the searches.`);
 });
 document.getElementById('loadHuntBtn').addEventListener('click', async ()=>{
   const id = document.getElementById('huntSelect').value;
@@ -699,7 +735,9 @@ document.getElementById('loadHuntBtn').addEventListener('click', async ()=>{
   document.querySelectorAll('input[data-chain]').forEach(cb=>{ cb.checked = hunt.chains.includes(cb.dataset.chain); });
   document.querySelectorAll('.cat-group').forEach(wrap=> syncCategoryMasterState(wrap));
   render();
-  alert('Hunt loaded — press the HUNT! button up top to run the searches.');
+  closeMenu();
+  setTab('setup');
+  alert('Hunt loaded — press the HUNT! button to run the searches.');
 });
 document.getElementById('deleteHuntBtn').addEventListener('click', ()=>{
   const id = document.getElementById('huntSelect').value;
@@ -707,34 +745,42 @@ document.getElementById('deleteHuntBtn').addEventListener('click', ()=>{
   if(confirm('Delete this saved hunt?')){ hunts = hunts.filter(h=> h.id!==id); saveHunts(); }
 });
 
-/* ---------- mobile drawers ---------- */
-function openDrawer(which){
-  const panel = document.getElementById('setupPanel');
-  const routeCol = document.getElementById('routeCol');
-  panel.classList.remove('drawer-open'); routeCol.classList.remove('drawer-open');
-  if(which==='setup') panel.classList.add('drawer-open');
-  if(which==='route') routeCol.classList.add('drawer-open');
-  document.getElementById('drawerBackdrop').classList.add('show');
+/* ---------- tabs ---------- */
+const TAB_PANELS = { setup:'panel-setup', route:'panel-route', notes:'panel-notes' };
+function setTab(name){
+  const isOpen = document.getElementById(TAB_PANELS[name]).classList.contains('open');
+  Object.values(TAB_PANELS).forEach(pid=> document.getElementById(pid).classList.remove('open'));
+  document.querySelectorAll('.tab-btn').forEach(b=> b.classList.remove('active'));
+  if(!isOpen){
+    document.getElementById(TAB_PANELS[name]).classList.add('open');
+    document.querySelector(`.tab-btn[data-tab="${name}"]`).classList.add('active');
+  }
 }
-function closeDrawers(){
-  document.getElementById('setupPanel').classList.remove('drawer-open');
-  document.getElementById('routeCol').classList.remove('drawer-open');
-  document.getElementById('drawerBackdrop').classList.remove('show');
-}
-document.getElementById('openSetupBtnM').addEventListener('click', ()=> openDrawer('setup'));
-document.getElementById('openRouteBtnM').addEventListener('click', ()=> openDrawer('route'));
-document.getElementById('drawerBackdrop').addEventListener('click', closeDrawers);
+document.querySelectorAll('.tab-btn').forEach(btn=> btn.addEventListener('click', ()=> setTab(btn.dataset.tab)));
 
 /* ---------- map ---------- */
-let map, markersLayer, routeLayer;
+let map, markersLayer, routeLayer, highlightLayer, tileLayer;
+let mapIsDark = false;
+const LIGHT_TILES = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+const DARK_TILES = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
 function emojiIcon(emoji, size){
   return L.divIcon({ html:`<div style="font-size:${size||22}px;line-height:1;">${emoji}</div>`, className:'', iconSize:[size||22,size||22], iconAnchor:[(size||22)/2,(size||22)/2] });
 }
+function setMapTheme(dark){
+  mapIsDark = dark;
+  if(tileLayer) map.removeLayer(tileLayer);
+  tileLayer = L.tileLayer(dark ? DARK_TILES : LIGHT_TILES, {
+    attribution: '&copy; OpenStreetMap contributors' + (dark ? ' &copy; CARTO' : ''), maxZoom:19
+  }).addTo(map);
+  tileLayer.bringToBack();
+  document.getElementById('mapThemeBtn').textContent = dark ? '☀️' : '🌙';
+}
 function initMap(){
   map = L.map('map', { scrollWheelZoom:false }).setView([39.8283,-98.5795], 4);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution:'&copy; OpenStreetMap contributors', maxZoom:19 }).addTo(map);
+  setMapTheme(true);
   markersLayer = L.layerGroup().addTo(map);
   routeLayer = L.layerGroup().addTo(map);
+  highlightLayer = L.layerGroup().addTo(map);
   map.on('click', async (e)=>{
     if(!pickingCenter) return;
     pickingCenter = false;
@@ -754,6 +800,7 @@ function initMap(){
     updateMap();
   });
 }
+document.getElementById('mapThemeBtn').addEventListener('click', ()=> setMapTheme(!mapIsDark));
 document.getElementById('pickCenterBtn').addEventListener('click', ()=>{
   pickingCenter = !pickingCenter;
   document.getElementById('pickCenterBtn').textContent = pickingCenter ? 'Click the map…' : '📍 Pick on map';
@@ -764,9 +811,11 @@ function updateMap(){
   const pts = [];
   stores.forEach(s=>{
     if(s.lat==null || s.lon==null) return;
-    const color = s.avoid ? '#e8393a' : (s.lastChecked ? '#2fb7a6' : '#ff6a1f');
+    const status = getStoreStatus(s);
+    const color = resolvedColor(status.color);
     const marker = L.circleMarker([s.lat,s.lon], { radius:9, color:'#0b0b0d', weight:2, fillColor:color, fillOpacity:0.95 }).addTo(markersLayer);
     marker.bindPopup(`<strong>${esc(s.name)}</strong>${s.favorite?' 🔥':''}<br>${esc(s.category||'')}<br>${esc(s.address||'')}${s.lastChecked?`<br>Last hunted: ${s.lastChecked}`:''}<br><a href="#" onclick="selectStore('${s.id}');return false;">View details ↓</a>`);
+    marker.on('click', ()=> selectStore(s.id));
     pts.push([s.lat,s.lon]);
   });
   if(searchCenter){
@@ -777,9 +826,23 @@ function updateMap(){
     L.marker([homeCoord.lat, homeCoord.lon], { icon: emojiIcon('🏠') }).addTo(markersLayer).bindPopup('🏠 Home');
     pts.push([homeCoord.lat, homeCoord.lon]);
   }
+  updateHighlight();
   if(pts.length) map.fitBounds(pts, { padding:[30,30], maxZoom:13 });
 }
-function selectStore(id){ selectedStoreId = id; editingId = null; closeDrawers(); render(); }
+function updateHighlight(){
+  highlightLayer.clearLayers();
+  const store = stores.find(s=> s.id===selectedStoreId);
+  if(!store || store.lat==null || store.lon==null) return;
+  L.circleMarker([store.lat, store.lon], {
+    radius:16, color:'#ffcc00', weight:0, fillColor:'#ffcc00', fillOpacity:0.5, interactive:false, className:'pulse-marker'
+  }).addTo(highlightLayer);
+}
+function selectStore(id){
+  selectedStoreId = id; editingId = null; closeMenu();
+  render();
+  const detail = document.getElementById('storeDetail');
+  if(detail) detail.scrollIntoView({ behavior:'smooth', block:'start' });
+}
 window.selectStore = selectStore;
 
 /* ---------- route drawing (free OSRM demo routing, falls back to straight lines) ---------- */
@@ -788,7 +851,10 @@ async function drawRoute(points){
   const withCoords = points.filter(p=> p.lat!=null && p.lon!=null);
   if(withCoords.length < 2) return;
   withCoords.forEach((p,i)=>{
-    L.marker([p.lat,p.lon], { icon: L.divIcon({ html:`<div class="route-num-badge">${i===0?'S':(i===withCoords.length-1?'E':i)}</div>`, className:'', iconSize:[22,22], iconAnchor:[11,11] }) }).addTo(routeLayer);
+    const marker = L.marker([p.lat,p.lon], {
+      icon: L.divIcon({ html:`<div class="route-num-badge">${i===0?'S':(i===withCoords.length-1?'E':i)}</div>`, className:'', iconSize:[22,22], iconAnchor:[11,11] }),
+      interactive:false // let clicks pass through to the store marker underneath
+    }).addTo(routeLayer);
   });
   try{
     const coordStr = withCoords.map(p=> `${p.lon},${p.lat}`).join(';');
@@ -808,7 +874,6 @@ async function drawRoute(points){
 
 /* ---------- rendering ---------- */
 function daysOverdue(store){ if(!store.restockDay) return false; return store.restockDay < new Date().toISOString().slice(0,10); }
-function statusColor(s){ return s.avoid ? '#e8393a' : (s.lastChecked ? '#2fb7a6' : '#ff6a1f'); }
 function passesFilter(store){
   if(document.getElementById('favoritesOnly').checked && !store.favorite) return false;
   const f = document.getElementById('seriesFilter').value;
@@ -826,43 +891,36 @@ function populateRouteSelects(){
   if([...endSel.options].some(o=>o.value===prevEnd)) endSel.value = prevEnd;
 }
 
-function buildRouteListItem(label, color, id, draggable, orderIdx){
-  const div = document.createElement('div');
-  div.className = 'route-list-item' + (id && id===selectedStoreId ? ' selected' : '');
-  div.style.borderLeftColor = color;
-  div.innerHTML = `${draggable?'<span class="drag-handle">⠿</span>':''}<span class="rli-label">${esc(label)}</span>`;
-  if(id) div.addEventListener('click', (e)=>{ if(!e.target.classList.contains('drag-handle')) selectStore(id); });
-  if(draggable){
-    div.draggable = true;
-    div.dataset.orderIdx = orderIdx;
-    div.addEventListener('dragstart', e=>{ e.dataTransfer.setData('text/plain', String(orderIdx)); div.classList.add('dragging'); });
-    div.addEventListener('dragend', ()=> div.classList.remove('dragging'));
-    div.addEventListener('dragover', e=> e.preventDefault());
-    div.addEventListener('drop', async e=>{
-      e.preventDefault();
-      const fromIdx = parseInt(e.dataTransfer.getData('text/plain'), 10);
-      const toIdx = parseInt(div.dataset.orderIdx, 10);
-      if(isNaN(fromIdx) || fromIdx===toIdx || !currentRoute) return;
-      const arr = currentRoute.ordered;
-      const [moved] = arr.splice(fromIdx,1);
-      arr.splice(toIdx,0,moved);
-      renderRouteList();
-      await drawRoute([currentRoute.start, ...currentRoute.ordered, currentRoute.end]);
-    });
-  }
-  return div;
-}
 function renderRouteList(){
   const el = document.getElementById('routeListPanel');
   el.innerHTML = '';
+  const addRow = (label, color, id, moveable, idx, total)=>{
+    const div = document.createElement('div');
+    div.className = 'route-list-item' + (id && id===selectedStoreId ? ' selected' : '');
+    div.style.borderLeftColor = color;
+    div.innerHTML = `<span class="rli-label">${esc(label)}</span>` + (moveable ? `<span class="rli-move"><button data-dir="up" ${idx===0?'disabled':''}>▲</button><button data-dir="down" ${idx===total-1?'disabled':''}>▼</button></span>` : '');
+    if(id) div.querySelector('.rli-label').addEventListener('click', ()=> selectStore(id));
+    if(moveable){
+      div.querySelectorAll('.rli-move button').forEach(btn=> btn.addEventListener('click', async ()=>{
+        const dir = btn.dataset.dir;
+        const arr = currentRoute.ordered;
+        const swapWith = dir==='up' ? idx-1 : idx+1;
+        if(swapWith<0 || swapWith>=arr.length) return;
+        [arr[idx], arr[swapWith]] = [arr[swapWith], arr[idx]];
+        renderRouteList();
+        await drawRoute([currentRoute.start, ...currentRoute.ordered, currentRoute.end]);
+      }));
+    }
+    el.appendChild(div);
+  };
   if(currentRoute){
-    el.appendChild(buildRouteListItem('Start: ' + (currentRoute.start.address||'Start'), '#8a8a90', null, false));
-    currentRoute.ordered.forEach((s,i)=> el.appendChild(buildRouteListItem(`${i+1}. ${s.name}`, statusColor(s), s.id, true, i)));
-    el.appendChild(buildRouteListItem('End: ' + (currentRoute.end.address||'End'), '#8a8a90', null, false));
+    addRow('Start: ' + (currentRoute.start.address||'Start'), '#8a8a90', null, false);
+    currentRoute.ordered.forEach((s,i)=> addRow(`${i+1}. ${s.name}`, resolvedColor(getStoreStatus(s).color), s.id, true, i, currentRoute.ordered.length));
+    addRow('End: ' + (currentRoute.end.address||'End'), '#8a8a90', null, false);
   } else {
     const list = stores.filter(s=>!s.avoid);
-    if(!list.length) el.innerHTML = '<p style="font-size:0.76rem;color:var(--ink-soft);">No stores yet.</p>';
-    else list.forEach(s=> el.appendChild(buildRouteListItem(s.name, statusColor(s), s.id, false)));
+    if(!list.length) el.innerHTML = '<p style="font-size:0.8rem;color:var(--ink-soft);">No stores yet.</p>';
+    else list.forEach(s=> addRow(s.name, resolvedColor(getStoreStatus(s).color), s.id, false));
   }
 }
 
@@ -874,19 +932,22 @@ function renderStoreDetail(){
   if(!store){ empty.style.display = 'block'; return; }
   empty.style.display = 'none';
 
+  const status = getStoreStatus(store);
   const card = document.createElement('div');
-  card.className = 'store-card' + (store.avoid?' avoided':'');
+  card.className = 'store-card';
+  card.style.borderLeftColor = status.color;
   const q = sel => card.querySelector(sel);
 
   if(editingId === store.id){
     card.innerHTML = `
+      <button class="close-x" data-role="closeX">✕</button>
       <span class="tab">${esc(store.category||'store')}</span>
-      <div class="field"><label>Name</label><input type="text" id="editName" value="${esc(store.name)}"></div>
+      <div class="field" style="margin-top:30px;"><label>Name</label><input type="text" id="editName" value="${esc(store.name)}"></div>
       <div class="field"><label>Address</label><input type="text" id="editAddr" value="${esc(store.address)}"></div>
       <div class="field"><label>Last hunted</label><input type="date" id="editLastChecked" value="${store.lastChecked||''}"></div>
       <div class="field"><label>Next restock</label><input type="date" id="editRestock" value="${store.restockDay||''}"></div>
       <div class="field"><label>Car types found here</label>
-        ${carTypes.map(t=>`<label style="font-size:.85rem;display:flex;align-items:center;gap:6px;margin-bottom:5px;"><input type="checkbox" data-edit-cartype="${esc(t)}" ${store.carTags&&store.carTags[t]?'checked':''}> ${esc(t)}</label>`).join('')}
+        ${carTypes.map(t=>`<label style="font-size:.9rem;display:flex;align-items:center;gap:8px;margin-bottom:6px;"><input type="checkbox" data-edit-cartype="${esc(t)}" ${store.carTags&&store.carTags[t]?'checked':''}> ${esc(t)}</label>`).join('')}
       </div>
       <div class="field"><label>Notes</label><textarea id="editNotes">${esc(store.notes)}</textarea></div>
       <div class="card-actions">
@@ -894,6 +955,7 @@ function renderStoreDetail(){
         <button class="btn small secondary" data-role="cancelEdit">Cancel</button>
       </div>`;
     wrap.appendChild(card);
+    q('[data-role=closeX]').addEventListener('click', ()=>{ selectedStoreId=null; editingId=null; render(); });
     q('[data-role=saveEdit]').addEventListener('click', async ()=>{
       store.name = document.getElementById('editName').value.trim() || store.name;
       const newAddr = document.getElementById('editAddr').value.trim();
@@ -912,9 +974,11 @@ function renderStoreDetail(){
   const lastPhoto = store.photos && store.photos.length ? store.photos[store.photos.length-1] : null;
   const activeTags = carTypes.filter(t=> store.carTags && store.carTags[t]);
   card.innerHTML = `
+    <button class="close-x" data-role="closeX">✕</button>
     <span class="tab">${esc(store.category || 'store')}</span>
     <h3>${store.favorite?'🔥 ':''}${esc(store.name)}</h3>
     <div class="addr">${esc(store.address) || '<em>no address yet</em>'}</div>
+    <span class="status-pill" style="background:${status.color};color:#0b0b0d;">${status.label}</span>
     ${activeTags.length ? `<div class="tag-badges">${activeTags.map(t=>`<span class="tag-badge">${esc(t)}</span>`).join('')}</div>` : ''}
     <div class="meta-line">Last hunted: ${store.lastChecked || 'never'}</div>
     <div class="meta-line">Next restock: ${store.restockDay || 'not set'}${daysOverdue(store)?'<span class="overdue">⚠ check now</span>':''}</div>
@@ -930,6 +994,7 @@ function renderStoreDetail(){
     </div>`;
   wrap.appendChild(card);
 
+  q('[data-role=closeX]').addEventListener('click', ()=>{ selectedStoreId=null; render(); });
   q('[data-role=markVisited]').addEventListener('click', ()=>{ store.lastChecked=new Date().toISOString().slice(0,10); save(); });
   q('[data-role=favorite]').addEventListener('click', ()=>{ store.favorite=!store.favorite; save(); });
   q('[data-role=avoid]').addEventListener('click', ()=>{ store.avoid=!store.avoid; save(); });
@@ -952,7 +1017,6 @@ function renderStoreDetail(){
 }
 
 function render(){
-  document.getElementById('listSub').textContent = stores.length ? `${stores.length} store${stores.length===1?'':'s'} on your list (select one to view details)` : 'No stores yet.';
   populateRouteSelects();
   updateMap();
   renderRouteList();
@@ -961,19 +1025,110 @@ function render(){
   document.getElementById('routeCount').textContent = `${routable.length} stop${routable.length===1?'':'s'} available for the route`;
 }
 
-/* ---------- photo lightbox ---------- */
-function openLightbox(storeId, index){ lightboxState = { storeId, index }; renderLightbox(); document.getElementById('lightboxOverlay').style.display='flex'; }
+/* ---------- 🔥 Hot List (wishlist targets) ---------- */
+function makeTarget(name){
+  return { id:'t'+Date.now()+Math.random().toString(36).slice(2,7), name, found:false, foundDate:'', notes:'', photos:[] };
+}
+document.getElementById('addTargetBtn').addEventListener('click', ()=>{
+  const name = document.getElementById('newTargetName').value.trim();
+  if(!name) return;
+  targets.push(makeTarget(name));
+  document.getElementById('newTargetName').value='';
+  saveTargets();
+});
+function renderTargets(){
+  const el = document.getElementById('targetList');
+  el.innerHTML = '';
+  if(!targets.length){ el.innerHTML = '<p style="font-size:0.8rem;color:var(--ink-soft);">Nothing on your list yet — add a car above.</p>'; }
+  targets.forEach(t=>{
+    const row = document.createElement('div');
+    row.className = 'target-row' + (t.found ? ' found' : '');
+    row.innerHTML = `<input type="checkbox" data-role="found" ${t.found?'checked':''}><span class="rli-label">${esc(t.name)}</span>`;
+    row.querySelector('[data-role=found]').addEventListener('change', e=>{
+      t.found = e.target.checked;
+      t.foundDate = t.found ? new Date().toISOString().slice(0,10) : '';
+      saveTargets();
+    });
+    row.querySelector('.rli-label').addEventListener('click', ()=>{ selectedTargetId = t.id; renderTargetDetail(); });
+    el.appendChild(row);
+  });
+  renderTargetDetail();
+}
+function renderTargetDetail(){
+  const wrap = document.getElementById('targetDetail');
+  wrap.innerHTML = '';
+  const t = targets.find(x=> x.id===selectedTargetId);
+  if(!t) return;
+  const card = document.createElement('div');
+  card.className = 'store-card';
+  card.style.borderLeftColor = t.found ? 'var(--green)' : 'var(--line)';
+  const q = sel => card.querySelector(sel);
+
+  if(editingTargetId === t.id){
+    card.innerHTML = `
+      <button class="close-x" data-role="closeX">✕</button>
+      <div class="field" style="margin-top:30px;"><label>Name</label><input type="text" id="editTargetName" value="${esc(t.name)}"></div>
+      <div class="field"><label>Notes</label><textarea id="editTargetNotes">${esc(t.notes)}</textarea></div>
+      <div class="card-actions">
+        <button class="btn small teal" data-role="saveEdit">Save</button>
+        <button class="btn small secondary" data-role="cancelEdit">Cancel</button>
+      </div>`;
+    wrap.appendChild(card);
+    q('[data-role=closeX]').addEventListener('click', ()=>{ selectedTargetId=null; editingTargetId=null; renderTargets(); });
+    q('[data-role=saveEdit]').addEventListener('click', ()=>{
+      t.name = document.getElementById('editTargetName').value.trim() || t.name;
+      t.notes = document.getElementById('editTargetNotes').value;
+      editingTargetId = null; saveTargets();
+    });
+    q('[data-role=cancelEdit]').addEventListener('click', ()=>{ editingTargetId=null; renderTargetDetail(); });
+    return;
+  }
+
+  const lastPhoto = t.photos && t.photos.length ? t.photos[t.photos.length-1] : null;
+  card.innerHTML = `
+    <button class="close-x" data-role="closeX">✕</button>
+    <h3 style="margin-top:30px;">${esc(t.name)}</h3>
+    <span class="status-pill" style="background:${t.found?'var(--green)':'var(--card-2)'};color:${t.found?'#08201d':'var(--ink-soft)'};">${t.found ? 'Found ' + t.foundDate : 'Still hunting'}</span>
+    ${lastPhoto?`<img class="peg-photo" data-role="photoThumb" src="${lastPhoto.dataUrl}">`:''}
+    <textarea class="notes" readonly placeholder="No notes yet — click Edit to add some.">${esc(t.notes)}</textarea>
+    <div class="card-actions">
+      <label class="upload">📷 Photo<input type="file" accept="image/*" data-role="photo" style="display:none;"></label>
+      <button class="btn small secondary" data-role="editBtn">✏️ Edit</button>
+      <button class="btn small secondary" data-role="remove">Remove</button>
+    </div>`;
+  wrap.appendChild(card);
+  q('[data-role=closeX]').addEventListener('click', ()=>{ selectedTargetId=null; renderTargetDetail(); });
+  q('[data-role=editBtn]').addEventListener('click', ()=>{ editingTargetId = t.id; renderTargetDetail(); });
+  q('[data-role=remove]').addEventListener('click', ()=>{
+    if(confirm(`Remove "${t.name}" from your Hot List?`)){
+      targets = targets.filter(x=> x.id!==t.id);
+      selectedTargetId = null;
+      saveTargets();
+    }
+  });
+  q('[data-role=photo]').addEventListener('change', e=>{
+    const file=e.target.files[0]; if(!file) return;
+    const reader=new FileReader();
+    reader.onload=()=>{ t.photos.push({ date:new Date().toISOString().slice(0,10), dataUrl:reader.result }); saveTargets(); renderTargetDetail(); };
+    reader.readAsDataURL(file);
+  });
+  const thumb = q('[data-role=photoThumb]');
+  if(thumb) thumb.addEventListener('click', ()=> openLightbox(null, t.photos.length-1, t));
+}
+
+/* ---------- photo lightbox (shared by stores and targets) ---------- */
+function openLightbox(storeId, index, targetObj){ lightboxState = { storeId, index, targetObj }; renderLightbox(); document.getElementById('lightboxOverlay').style.display='flex'; }
 function renderLightbox(){
-  const store = stores.find(s=> s.id===lightboxState.storeId);
-  if(!store || !store.photos.length){ document.getElementById('lightboxOverlay').style.display='none'; return; }
-  const idx = Math.max(0, Math.min(lightboxState.index, store.photos.length-1));
+  const obj = lightboxState.targetObj || stores.find(s=> s.id===lightboxState.storeId);
+  if(!obj || !obj.photos.length){ document.getElementById('lightboxOverlay').style.display='none'; return; }
+  const idx = Math.max(0, Math.min(lightboxState.index, obj.photos.length-1));
   lightboxState.index = idx;
-  const photo = store.photos[idx];
+  const photo = obj.photos[idx];
   document.getElementById('lightboxImg').src = photo.dataUrl;
-  document.getElementById('lightboxDate').textContent = `${store.name} — ${photo.date || 'undated'}`;
-  document.getElementById('lightboxCounter').textContent = `${idx+1} / ${store.photos.length}`;
+  document.getElementById('lightboxDate').textContent = `${obj.name} — ${photo.date || 'undated'}`;
+  document.getElementById('lightboxCounter').textContent = `${idx+1} / ${obj.photos.length}`;
   document.getElementById('lightboxPrev').disabled = idx===0;
-  document.getElementById('lightboxNext').disabled = idx===store.photos.length-1;
+  document.getElementById('lightboxNext').disabled = idx===obj.photos.length-1;
 }
 document.getElementById('lightboxClose').addEventListener('click', ()=>{ document.getElementById('lightboxOverlay').style.display='none'; });
 document.getElementById('lightboxOverlay').addEventListener('click', (e)=>{ if(e.target.id==='lightboxOverlay') document.getElementById('lightboxOverlay').style.display='none'; });
@@ -1006,7 +1161,7 @@ async function resolvePoint(selectVal, customInputId){
     });
   }
   if(selectVal==='home'){
-    if(!homeCoord){ alert('Enter a home address on the left first.'); return null; }
+    if(!homeCoord){ alert('Enter a home address in Hunt Setup first.'); return null; }
     return { lat:homeCoord.lat, lon:homeCoord.lon, address:homeCoord.address };
   }
   if(selectVal==='custom'){
@@ -1028,9 +1183,9 @@ document.getElementById('generateRouteBtn').addEventListener('click', async ()=>
   const startVal = document.getElementById('startSelect').value;
   const endVal = document.getElementById('endSelect').value;
   const start = await resolvePoint(startVal, 'startAddrInput');
-  if(!start || !start.address){ alert('Pick or enter a valid start point.'); return; }
+  if(!start || !start.address){ alert('Pick or enter a valid start point in Hunt Setup.'); return; }
   const end = endVal==='loop' ? start : await resolvePoint(endVal, 'endAddrInput');
-  if(!end || !end.address){ alert('Pick or enter a valid end point.'); return; }
+  if(!end || !end.address){ alert('Pick or enter a valid end point in Hunt Setup.'); return; }
 
   let stops = stores.filter(s=> !s.avoid && s.address && passesFilter(s));
   if(start.id) stops = stops.filter(s=> s.id!==start.id);
@@ -1063,6 +1218,7 @@ migrateStores();
 populateHuntSelect();
 renderCarTypes();
 render();
+renderTargets();
 setTimeout(syncChainCheckboxes, 0);
 </script>
 </body>
