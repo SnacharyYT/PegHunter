@@ -34,8 +34,8 @@
   header h1{font-family:'Anton',sans-serif; text-transform:uppercase; margin:0; text-align:center; letter-spacing:.01em; min-width:0;
     font-size:1.5rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; transform:scaleY(1.6); transform-origin:center;
     background:linear-gradient(90deg, var(--flame1), var(--flame2) 60%, var(--flame3)); -webkit-background-clip:text; background-clip:text; color:transparent;}
-  @media (max-width:380px){ header h1{font-size:1.1rem;} .header-logo, .hamburger-btn{height:58px;} }
-  .hamburger-btn{background:none; border:1px solid #34343a; color:var(--ink); border-radius:8px; font-size:1.5rem; padding:0 16px; cursor:pointer; height:76px;}
+  @media (max-width:380px){ header h1{font-size:1.1rem;} .header-logo{height:58px;} }
+  .hamburger-btn{background:none; border:1px solid #34343a; color:var(--ink); border-radius:8px; font-size:1.4rem; padding:10px 14px; cursor:pointer; line-height:1;}
 
   .menu-overlay{position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:5000; display:none;}
   .menu-overlay.show{display:block;}
@@ -222,8 +222,10 @@
   </div>
 
   <h2>Support</h2>
-  <a id="donateBtn" href="https://paypal.me/ZachEason23" target="_blank" rel="noopener" class="btn menu-full-btn" style="text-decoration:none;">☕ Donate</a>
-  <a href="mailto:TreasureHuntTracker@gmail.com?subject=Suggestion" class="btn secondary menu-full-btn" style="text-decoration:none;">💡 Send a Suggestion</a>
+  <div class="menu-btn-stack">
+    <a id="donateBtn" href="https://paypal.me/ZachEason23" target="_blank" rel="noopener" class="btn menu-full-btn" style="text-decoration:none;">☕ Donate</a>
+    <a href="mailto:TreasureHuntTracker@gmail.com?subject=Suggestion" class="btn secondary menu-full-btn" style="text-decoration:none;">💡 Send a Suggestion</a>
+  </div>
 
   <h2>Quick Guide</h2>
   <ol class="guide-list">
@@ -263,6 +265,7 @@
     <div class="hunt-spinner-overlay" id="huntSpinnerOverlay">
       <img src="wheels-icon-png-31823.png" alt="" class="hunt-spinner-wheel">
       <span id="huntSpinnerText">Hunting…</span>
+      <button class="btn small secondary" id="cancelHuntBtn" style="margin-top:8px;">Cancel</button>
     </div>
   </div>
   <div class="checker-stripe"></div>
@@ -542,29 +545,46 @@ const OVERPASS_ENDPOINTS = [
   'https://overpass.kumi.systems/api/interpreter',
   'https://overpass.openstreetmap.ru/api/interpreter'
 ];
-async function overpassFetch(query){
+async function overpassFetch(query, externalSignal){
   let lastErr;
   for(const endpoint of OVERPASS_ENDPOINTS){
+    if(externalSignal && externalSignal.aborted) throw new Error('Cancelled by user');
     try{
       await throttle('overpass', 600);
-      const res = await fetch(endpoint + '?data=' + encodeURIComponent(query));
+      const timeoutController = new AbortController();
+      const timeoutId = setTimeout(()=> timeoutController.abort(), 15000);
+      const onExternalAbort = ()=> timeoutController.abort();
+      if(externalSignal) externalSignal.addEventListener('abort', onExternalAbort);
+      let res;
+      try{
+        res = await fetch(endpoint + '?data=' + encodeURIComponent(query), { signal: timeoutController.signal });
+      } finally {
+        clearTimeout(timeoutId);
+        if(externalSignal) externalSignal.removeEventListener('abort', onExternalAbort);
+      }
+      if(externalSignal && externalSignal.aborted) throw new Error('Cancelled by user');
       if(!res.ok) throw new Error('HTTP ' + res.status + ' from ' + endpoint);
       return await res.json();
-    }catch(e){ console.error('Overpass endpoint failed:', endpoint, e); lastErr = e; }
+    }catch(e){
+      if(e.message === 'Cancelled by user') throw e;
+      if(e.name === 'AbortError') console.error('Overpass endpoint timed out after 15s:', endpoint);
+      else console.error('Overpass endpoint failed:', endpoint, e);
+      lastErr = e;
+    }
   }
   throw lastErr || new Error('All Overpass endpoints failed');
 }
 
-async function searchChain(chain, groupLabel){
+async function searchChain(chain, groupLabel, externalSignal){
   const center = await ensureSearchCenter();
   const rowStatus = document.querySelector(`.chain-row[data-chain-row="${CSS.escape(chain)}"] .chain-status`);
   if(!center){ if(rowStatus) rowStatus.textContent='need a location'; return; }
   if(rowStatus) rowStatus.textContent = 'Searching…';
   const radiusMeters = Math.round(parseFloat(document.getElementById('radius').value) * 1609.34);
   const escaped = chain.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const query = `[out:json][timeout:25];(nwr["shop"]["name"~"${escaped}",i](around:${radiusMeters},${center.lat},${center.lon}););out center tags;`;
+  const query = `[out:json][timeout:20];(nwr["shop"]["name"~"${escaped}",i](around:${radiusMeters},${center.lat},${center.lon}););out center tags;`;
   try{
-    const data = await overpassFetch(query);
+    const data = await overpassFetch(query, externalSignal);
     let added = 0;
     (data.elements||[]).forEach(el=>{
       const lat = el.lat ?? (el.center && el.center.lat);
@@ -587,8 +607,9 @@ async function searchChain(chain, groupLabel){
     if(rowStatus) rowStatus.textContent = added ? `${added} found` : 'none found nearby';
     save();
   }catch(e){
+    if(e.message === 'Cancelled by user'){ if(rowStatus) rowStatus.textContent = 'cancelled'; throw e; }
     console.error('Search failed for', chain, e);
-    if(rowStatus) rowStatus.textContent = 'failed (see console)';
+    if(rowStatus) rowStatus.textContent = 'failed after 15s (see console) — try a smaller radius for this chain';
   }
 }
 
@@ -659,6 +680,7 @@ function syncChainCheckboxes(){
 
 /* ---------- HUNT! button ---------- */
 let huntInProgress = false;
+let huntAbortController = null;
 document.getElementById('huntBtn').addEventListener('click', async ()=>{
   const center = await ensureSearchCenter();
   if(!center) return;
@@ -687,22 +709,32 @@ document.getElementById('huntBtn').addEventListener('click', async ()=>{
   const original = btn.textContent;
   btn.disabled = true;
   huntInProgress = true;
+  huntAbortController = new AbortController();
   const spinnerText = document.getElementById('huntSpinnerText');
   document.getElementById('huntSpinnerOverlay').classList.add('show');
   render(); // keeps Route Details greyed out for the duration of the hunt
-  for(let i=0;i<checked.length;i++){
-    const remaining = checked.length - i;
-    btn.textContent = `Hunting… ${i+1}/${checked.length}`;
-    spinnerText.textContent = `Hunting… ${i+1}/${checked.length} (~${remaining*2}s left)`;
-    await searchChain(checked[i].dataset.chain, checked[i].dataset.groupLabel);
+  try{
+    for(let i=0;i<checked.length;i++){
+      if(huntAbortController.signal.aborted) break;
+      const remaining = checked.length - i;
+      btn.textContent = `Hunting… ${i+1}/${checked.length}`;
+      spinnerText.textContent = `Hunting… ${i+1}/${checked.length} (~${remaining*2}s left, 15s timeout per chain)`;
+      await searchChain(checked[i].dataset.chain, checked[i].dataset.groupLabel, huntAbortController.signal);
+    }
+  }catch(e){
+    if(e.message !== 'Cancelled by user') console.error('Hunt loop error:', e);
   }
   btn.textContent = original;
   huntInProgress = false;
+  huntAbortController = null;
   document.getElementById('huntSpinnerOverlay').classList.remove('show');
   spinnerText.textContent = 'Hunting…';
   // stays disabled until a hunt-setup variable actually changes (see reEnableHunt below)
   render();
   openTabForce('route');
+});
+document.getElementById('cancelHuntBtn').addEventListener('click', ()=>{
+  if(huntAbortController) huntAbortController.abort();
 });
 function reEnableHunt(){ document.getElementById('huntBtn').disabled = false; }
 document.getElementById('centerInput').addEventListener('input', reEnableHunt);

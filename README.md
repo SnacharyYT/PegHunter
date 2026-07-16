@@ -8,10 +8,20 @@ Add these to the repo root alongside `index.html` (all generated from `THT_No_Ba
 - `icon-192.png`, `icon-512.png` — referenced by the manifest.
 - `apple-touch-icon.png` — used by iOS; has a solid dark background instead of transparency, since iOS renders transparent PNG areas as black on the home screen.
 
+## About the logo file
+The `THT_No_Background.png` in this delivery has been corrected from what was uploaded. The original file did have real transparency (verified — alpha channel present, fully transparent corners), but its semi-transparent edge pixels were baked in against a *white* backdrop before the alpha channel was added (a common Illustrator/Photoshop export artifact, often called a "white matte"). That's invisible on a white page but shows up as a visible white halo/fringe once placed on our dark background. I mathematically un-matted the edges (the standard fix: reversing the alpha-blend-against-white math) so the fringe is gone — confirmed by checking that edge pixel colors near the boundary now trend toward the actual dark artwork color instead of toward white. If you ever re-export this logo from the source file, tell your export tool to use a transparent/no background (not "matte: white") to avoid reintroducing this.
+
+## About the hunt "hanging forever" bug
+Root cause: a single-category hunt (e.g. only Auto Parts, or only Drug Stores) searches short, generic chain names like "CVS" across your whole radius with no bound on how long the free Overpass server is allowed to take — and the code was just waiting indefinitely for a response. Fixed two ways:
+- Each Overpass request now has a hard 15-second client-side timeout (previously it could wait on the server's own timeout — up to 25s — three times over, once per mirror, with no way to interrupt it).
+- Added a **Cancel** button on the hunting spinner, so if a search is genuinely taking too long you're never stuck waiting with no way out.
+
+If a chain's search still fails after the timeout, the message now suggests trying a smaller radius for that chain — a huge radius on a common short name is the most likely cause of genuinely slow results, not a bug in the request itself.
+
 ## Layout
-1. Header: logo left, title stretched to fill the space between logo and hamburger (taller/narrower via a CSS vertical stretch, per your call), hamburger sized to match the logo's height.
+1. Header: logo left, title stretched to fill the space between logo and hamburger (taller/narrower via a CSS vertical stretch, per your call), hamburger back to fitting its own icon rather than stretched to the logo's height.
 2. **Hunt Setup / Route Details / Hot List tabs now sit right below the header**, not down near the map. Tapping one smoothly scrolls you down to it as it slides open; tapping it again scrolls back up as it closes.
-3. Location box, then the map (day/night toggle, spinning-wheel overlay with a live progress count while a hunt runs).
+3. Location box, then the map (day/night toggle, spinning-wheel overlay with a live progress count and Cancel button while a hunt runs).
 4. The selected store's card appears under the map when you tap a pin or a Route Details entry.
 5. The three tab panels themselves still live further down the page — the buttons just moved up top as quick-nav shortcuts.
 
