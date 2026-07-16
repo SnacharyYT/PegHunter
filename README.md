@@ -2,30 +2,42 @@
 
 A mobile-first store tracker and route planner for Hot Wheels (and Matchbox / diecast) hunting. Hosted on GitHub Pages — no accounts, no paid APIs, no backend.
 
-## Assets this depends on
-Keep these in the same folder as `index.html` (relative paths, no code changes needed if you swap the art later — just keep the filenames):
-- `512_Icon_Dark_SVG.svg` — favicon + header logo
-- `wheels-icon-png-31823.png` — spinning wheel shown over the map while a hunt is running
-- `THT_512_Icon_Dark.png` — kept in the repo as a PNG fallback/source for future app-icon exports (not currently referenced by the page itself)
+## New files this round
+Add these to the repo root alongside `index.html` (all generated from `THT_No_Background.png`, so if you swap the logo again, regenerate these too and keep the same filenames):
+- `manifest.json` — lets Chrome/Android "Install and create shortcut" use a real icon instead of a white-padded fallback.
+- `icon-192.png`, `icon-512.png` — referenced by the manifest.
+- `apple-touch-icon.png` — used by iOS; has a solid dark background instead of transparency, since iOS renders transparent PNG areas as black on the home screen.
 
 ## Layout
-1. Header: logo on the left, centered title, ☰ menu on the right (Saved Hunts, Clear All Data, Donate, Send a Suggestion, quick guide, app version).
-2. Location box — zip/city/address/cross streets, or "📍 Pick on map" (same height as the input now).
-3. The map, checkered stripe above and below, day/night toggle in the corner. A spinning wheel overlays the map while a hunt is in progress.
-4. The selected store's detail card (appears here when you tap a pin or a Route Details entry).
-5. Three tabs — **Hunt Setup**, **Route Details**, **🔥 Hot List** — one open at a time. **Route Details stays disabled the entire time a hunt is running**, not just when there are zero stores, and opens automatically once the hunt finishes.
+1. Header: logo left, title stretched to fill the space between logo and hamburger (taller/narrower via a CSS vertical stretch, per your call), hamburger sized to match the logo's height.
+2. **Hunt Setup / Route Details / Hot List tabs now sit right below the header**, not down near the map. Tapping one smoothly scrolls you down to it as it slides open; tapping it again scrolls back up as it closes.
+3. Location box, then the map (day/night toggle, spinning-wheel overlay with a live progress count while a hunt runs).
+4. The selected store's card appears under the map when you tap a pin or a Route Details entry.
+5. The three tab panels themselves still live further down the page — the buttons just moved up top as quick-nav shortcuts.
 
-## The Hunt flow
-- Set up your search in **Hunt Setup**, press **🎯 HUNT!**. Starting a new hunt clears out any previously generated route so old and new results can't get mixed up.
-- HUNT! greys out once the search finishes and stays that way until you actually change something (location, radius, or checked chains).
-- In **Route Details**, Generate Route / Open in Maps / Clear board always sit on one row. Generate greys out after a successful run and re-enables only when you manually reorder a stop or hit Clear board.
-- The **"Only show/route favorites"** and car-type filters in Hunt Setup now apply everywhere consistently — the map pins, the Route Order list, and route generation all respect them. (They only affect stores you've already found, not what HUNT! searches for — a brand-new store can't be pre-marked favorite before it's been discovered.)
+## Hunt Setup
+- "Store Groups" is gone as a separate heading — the chain checkboxes now live directly under **Filters**, alongside a new checkbox list for **Filter by type** (multi-select — check as many as you want, OR logic) and Only show/route favorites (hidden automatically if you have no favorites yet).
+- **Car Types to Track** now explains itself: popular types are auto-added per chain but may be wrong — edit a store after your first hunt to correct it.
+- **Custom Store** only asks for Name + Address up front; tap "▾ More options" for category, car types, notes, and favorite.
+- **Re-running HUNT! after changing your criteria now prunes stale results** — but only auto-found stores that no longer match your checked chains *and* that you haven't touched (no notes, photos, favorite, hunted status, or restock date). Anything you've personalized is never removed by this, even if its chain gets unchecked — only the card's own Remove button deletes those. I built it this way deliberately since blind removal risked deleting real data; flag it if you'd rather it behave differently.
 
-## Selecting a store
-Tap a map pin or a Route Details entry to load that store's card, with a pulsing yellow highlight on the map. The card is a compact 50/50 split: name + 🎯 Hunt / 🚫 Skip / 🔥 Fav / ✕ Close along the top (all labeled, all on one line), category/address/tags/dates/notes on the left, and a large square photo (or a "tap to add" placeholder) on the right. Tap an existing photo for a full-screen view you can page through. Tapping 🎯 Hunt again undoes it. All of this is saved permanently with the store — it's there next time regardless of which hunt you run.
+## Route Details
+- **Start/End moved back here** from Hunt Setup, and Generate Route now stays disabled until both are actually filled in (defaults like "current location" and "loop back to start" count as filled).
+- "Clear board" is now **Show route / Hide route** — a non-destructive toggle for the map line, since the old version implied (correctly) that it might also drop your stores, which it never actually did but was confusingly named.
+- The reorder hint now says "after generating a route" to make clear the ▲▼ buttons only appear post-generation.
 
-## Store status colors
-- **Red** — never hunted · **Yellow** — hunted >7 days ago · **Green** — hunted within 7 days · **Blue** — restock date reached · **Gray** — marked "Skip"
+## Hot List
+- Each row now shows a ✏️ pencil to signal it's tappable for details.
+- The edit form's Save button is now "💾 Save & Close" instead of a bare Save, and the photo button matches Edit/Remove's styling.
+
+## Store cards
+- Notes moved from the left info column to under the photo on the right, balancing the card.
+- 🎯 Hunted / 🚫 Skip / 🔥 Fav / ✕ Close all sit in one row next to the name, each with a small label since icons alone aren't self-explanatory on a touch device.
+
+## Data menu (hamburger, bottom section)
+- **Export Data** downloads a JSON backup (stores, saved hunts, car types, Hot List).
+- **Import Data** loads one back in — on another device, or after clearing this one. Import replaces current data after a confirmation.
+- 💣 Clear All Data still wipes everything, with its own confirmation.
 
 ## Free services used (no API keys, no billing)
 - **Store discovery & geocoding:** OpenStreetMap's Overpass API and Nominatim.
@@ -33,15 +45,12 @@ Tap a map pin or a Route Details entry to load that store's card, with a pulsing
 - **Route preview line:** the public OSRM demo routing server (falls back to a straight dashed line if unreachable).
 - **Turn-by-turn navigation:** Google's free, keyless Maps Directions URL scheme.
 
-Requests are throttled per-service to stay within normal fair-use limits.
-
-## About the version number
-The hamburger menu shows "v1.1 — July 2026" as a placeholder — there's no build process tracking this automatically, so bump it by hand in the HTML whenever you want to mark a meaningful update.
+## About the "hunting…" wait time
+A truly accurate countdown isn't realistic here — search time depends on network conditions and how busy the free Overpass servers are. Instead, the spinner shows live progress ("Hunting… 3/7") plus a rough estimate (~2s per remaining chain) so you have a sense of how much is left without a number that could be misleadingly precise.
 
 ## Reasonable next steps (not built yet)
-- **Cross-device sync** — needs a small backend (Firebase/Supabase) plus login.
-- **True offline PWA support** — a `manifest.json` + service worker for a real home-screen icon and offline use.
-- **CSV/JSON export/import** of your store list and Hot List.
+- **Cross-device sync** — Export/Import now covers manual transfer; a real backend (Firebase/Supabase) would make it automatic.
+- **True offline support** — the manifest is a step toward a full PWA, but there's no service worker yet, so it won't work without a connection.
 - **Smarter route optimization** — current ordering is a nearest-neighbor heuristic, fine for ~10-20 stops.
 
 Happy hunting!

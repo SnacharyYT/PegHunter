@@ -3,8 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#0b0b0d">
 <title>Treasure Hunt Tracker</title>
 <link rel="icon" href="512_Icon_Dark_SVG.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Rajdhani:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -26,12 +29,13 @@
 
   .checker-stripe{height:6px; background-image:repeating-linear-gradient(90deg, #000 0 10px, #f2f0ec 10px 20px); opacity:0.9;}
 
-  header{display:grid; grid-template-columns:1fr auto 1fr; align-items:center; padding:28px 18px; background:var(--bg-panel);}
-  .header-logo{height:76px; width:auto; justify-self:start;}
-  header h1{font-family:'Anton',sans-serif; text-transform:uppercase; font-size:1.35rem; margin:0; text-align:center; letter-spacing:.02em; min-width:0;
+  header{display:grid; grid-template-columns:auto 1fr auto; align-items:center; padding:28px 18px; background:var(--bg-panel);}
+  .header-logo{height:76px; width:auto;}
+  header h1{font-family:'Anton',sans-serif; text-transform:uppercase; margin:0; text-align:center; letter-spacing:.01em; min-width:0;
+    font-size:1.5rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; transform:scaleY(1.6); transform-origin:center;
     background:linear-gradient(90deg, var(--flame1), var(--flame2) 60%, var(--flame3)); -webkit-background-clip:text; background-clip:text; color:transparent;}
-  @media (max-width:380px){ header h1{font-size:1.05rem;} .header-logo{height:58px;} }
-  .hamburger-btn{justify-self:end; background:none; border:1px solid #34343a; color:var(--ink); border-radius:8px; font-size:1.3rem; padding:6px 12px; cursor:pointer;}
+  @media (max-width:380px){ header h1{font-size:1.1rem;} .header-logo, .hamburger-btn{height:58px;} }
+  .hamburger-btn{background:none; border:1px solid #34343a; color:var(--ink); border-radius:8px; font-size:1.5rem; padding:0 16px; cursor:pointer; height:76px;}
 
   .menu-overlay{position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:5000; display:none;}
   .menu-overlay.show{display:block;}
@@ -41,7 +45,10 @@
   .menu-drawer h2:first-of-type{margin-top:6px;}
   .menu-close{position:absolute; top:14px; right:14px; background:none; border:none; color:var(--ink); font-size:1.3rem; cursor:pointer;}
   .guide-list{margin:0; padding-left:20px; font-size:0.86rem; color:var(--ink-soft); line-height:1.6;}
-  .menu-btn-row{justify-content:center;}
+  .menu-select{width:100%; padding:11px 12px; border-radius:8px; border:1px solid #34343a; background:#0f0f11; color:var(--ink); font-family:'Rajdhani',sans-serif; font-size:0.95rem; margin-bottom:10px;}
+  .menu-btn-stack{display:flex; flex-direction:column; gap:8px; margin-bottom:6px;}
+  .menu-full-btn{width:100%; text-align:center; display:block; box-sizing:border-box; cursor:pointer;}
+  #bombBtn{border:1px solid var(--red); background:transparent; color:var(--red);}
   .app-version{text-align:center; color:var(--ink-soft); font-size:0.7rem; margin-top:20px;}
   .guide-list li{margin-bottom:8px;}
 
@@ -73,14 +80,16 @@
   .tab-btn.active{background:linear-gradient(90deg, var(--flame1), var(--flame2)); color:#141416; border-color:transparent;}
   .tab-btn:disabled{opacity:.35; cursor:not-allowed;}
 
-  .tab-panel{display:none; background:var(--bg-panel); border:1px solid var(--line); border-radius:10px; padding:16px;}
-  .tab-panel.open{display:block;}
+  .tab-panel{background:var(--bg-panel); border:1px solid var(--line); border-radius:10px; padding:0 16px; max-height:0; opacity:0; overflow:hidden; transition:max-height .4s ease, opacity .3s ease, padding .3s ease;}
+  .tab-panel.open{max-height:4000px; opacity:1; padding:16px;}
   .tab-panel h3{font-family:'Anton',sans-serif; text-transform:uppercase; font-size:1rem; letter-spacing:.04em; color:var(--flame2); margin:16px 0 8px; border-bottom:1px solid var(--line); padding-bottom:6px;}
   .tab-panel h3:first-child{margin-top:0;}
 
   .field{margin-bottom:13px;}
   .field label{display:block; font-size:0.72rem; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-soft); margin-bottom:5px;}
   .field label.plain{text-transform:none; letter-spacing:0; display:flex; align-items:center; gap:8px; cursor:pointer;}
+  .type-filter-item{padding:6px 0; font-size:0.9rem; border-bottom:1px dashed var(--line);}
+  .type-filter-item:last-child{border-bottom:none;}
   .field input[type=text], .field input[type=number], .field select, .field textarea{
     width:100%; padding:10px 10px; border-radius:6px; border:1px solid #34343a; background:#0f0f11; color:var(--ink); font-family:'Rajdhani',sans-serif; font-size:16px;
   }
@@ -158,7 +167,7 @@
   .meta-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:8px 0;}
   .meta-label{display:block; font-size:0.6rem; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-soft);}
   .meta-value{display:block; font-size:0.85rem; color:var(--ink);}
-  .notes-display{font-size:0.82rem; color:var(--ink-soft); line-height:1.4; white-space:pre-wrap;}
+  .notes-display{font-size:0.82rem; color:var(--ink-soft); line-height:1.4; white-space:pre-wrap; margin-top:8px;}
   .notes-display.notes-empty{font-style:italic; opacity:.65;}
   .overdue{color:var(--red); font-weight:700; font-size:0.74rem; margin-left:4px;}
   textarea.notes{width:100%; min-height:56px; font-family:'Rajdhani',sans-serif; font-size:0.9rem; padding:9px 10px; border:1px solid var(--line); border-radius:6px; resize:vertical; background:#0f0f11; color:var(--ink-soft);}
@@ -174,6 +183,7 @@
   .rli-move button:disabled{opacity:0.3; cursor:not-allowed;}
 
   .target-row{background:#0f0f11; border-left:5px solid var(--line); padding:10px; border-radius:4px; margin-bottom:8px; display:flex; align-items:center; gap:10px;}
+  .edit-pencil{opacity:0.55; font-size:0.85rem; flex-shrink:0;}
   .target-row.found{border-left-color:var(--green);}
   .target-row .rli-label{cursor:pointer;}
   .target-row.found .rli-label{text-decoration:line-through; color:var(--ink-soft);}
@@ -204,33 +214,44 @@
   <button class="menu-close" id="menuCloseBtn">✕</button>
 
   <h2>Saved Hunts</h2>
-  <select id="huntSelect" style="width:100%;margin-bottom:8px;"><option value="">— saved hunts —</option></select>
-  <div class="btn-row menu-btn-row">
-    <button class="btn-tiny" id="loadHuntBtn">Load</button>
-    <button class="btn-tiny" id="deleteHuntBtn">Delete</button>
-    <button class="btn-tiny" id="saveHuntBtn">💾 Save Hunt</button>
+  <select id="huntSelect" class="menu-select"><option value="">— saved hunts —</option></select>
+  <div class="menu-btn-stack">
+    <button class="btn secondary menu-full-btn" id="loadHuntBtn">Load</button>
+    <button class="btn secondary menu-full-btn" id="deleteHuntBtn">Delete</button>
+    <button class="btn menu-full-btn" id="saveHuntBtn">Save Hunt</button>
   </div>
 
-  <h2>Data</h2>
-  <button class="btn-tiny" id="bombBtn" style="border-color:var(--red);color:var(--red);width:100%;">💣 Clear All Data</button>
-
   <h2>Support</h2>
-  <a id="donateBtn" href="https://paypal.me/ZachEason23" target="_blank" rel="noopener" class="btn" style="display:block;text-align:center;text-decoration:none;margin-bottom:8px;">☕ Donate</a>
-  <a href="mailto:TreasureHuntTracker@gmail.com?subject=Suggestion" class="btn secondary" style="display:block;text-align:center;text-decoration:none;">💡 Send a Suggestion</a>
+  <a id="donateBtn" href="https://paypal.me/ZachEason23" target="_blank" rel="noopener" class="btn menu-full-btn" style="text-decoration:none;">☕ Donate</a>
+  <a href="mailto:TreasureHuntTracker@gmail.com?subject=Suggestion" class="btn secondary menu-full-btn" style="text-decoration:none;">💡 Send a Suggestion</a>
 
   <h2>Quick Guide</h2>
   <ol class="guide-list">
     <li>Set your location above the map (type it, or tap "Pick on map").</li>
-    <li>Open <strong>Hunt Setup</strong> — check store types, set Start/End, tap HUNT!.</li>
+    <li>Open <strong>Hunt Setup</strong> — check store types, tap HUNT!.</li>
     <li>Tap a map pin, or an item in Route Details, to see that store's card.</li>
-    <li>Open <strong>Route Details</strong> to generate your route and send it to Google Maps.</li>
+    <li>Open <strong>Route Details</strong> to set Start/End, generate your route, and send it to Google Maps.</li>
     <li>Track wishlist cars in <strong>🔥 Hot List</strong>.</li>
+    <li>On your phone in Chrome, open the browser menu and tap "Install and create shortcut" to add this to your home screen.</li>
   </ol>
+
+  <h2>Data</h2>
+  <div class="menu-btn-stack">
+    <button class="btn secondary menu-full-btn" id="exportBtn">⬇️ Export Data</button>
+    <label class="btn secondary menu-full-btn" id="importLabel">⬆️ Import Data<input type="file" id="importInput" accept="application/json" style="display:none;"></label>
+    <button class="btn menu-full-btn" id="bombBtn">💣 Clear All Data</button>
+  </div>
 
   <p class="app-version">v1.1 — July 2026</p>
 </div>
 
 <main class="stack">
+  <div class="tab-buttons">
+    <button class="tab-btn" data-tab="setup">⚙️ Hunt Setup</button>
+    <button class="tab-btn" data-tab="route">🗺️ Route Details</button>
+    <button class="tab-btn" data-tab="notes">🔥 Hot List</button>
+  </div>
+
   <section class="location-row">
     <input type="text" id="centerInput" placeholder="e.g. 35749 or Huntsville, AL">
     <button class="btn-tiny" id="pickCenterBtn">📍 Pick on map</button>
@@ -241,19 +262,13 @@
     <button class="map-theme-btn" id="mapThemeBtn" title="Toggle day/night map">☀️</button>
     <div class="hunt-spinner-overlay" id="huntSpinnerOverlay">
       <img src="wheels-icon-png-31823.png" alt="" class="hunt-spinner-wheel">
-      <span>Hunting…</span>
+      <span id="huntSpinnerText">Hunting…</span>
     </div>
   </div>
   <div class="checker-stripe"></div>
 
   <div id="storeDetail"></div>
   <div id="emptyState" class="empty">Tap a pin on the map, or a store in Route Details, to see it here.</div>
-
-  <div class="tab-buttons">
-    <button class="tab-btn" data-tab="setup">🔧 Hunt Setup</button>
-    <button class="tab-btn" data-tab="route">🧭 Route Details</button>
-    <button class="tab-btn" data-tab="notes">🔥 Hot List</button>
-  </div>
 
   <section class="tab-panel" id="panel-setup">
     <button class="hunt-cta-panel" id="huntBtn">🎯 HUNT!</button>
@@ -268,7 +283,46 @@
       <input type="text" id="homeAddress" placeholder="Your address">
     </div>
 
-    <h3>Route Start / End</h3>
+    <h3>Filters</h3>
+    <p class="hint-text">Check the chains you want, then press HUNT! above. Unchecking never deletes stores you've already found.</p>
+    <div id="catGroups"></div>
+    <div class="field">
+      <label>Filter by type</label>
+      <div id="typeFilterList"></div>
+    </div>
+    <div class="field" id="favoritesOnlyField">
+      <label class="plain"><input type="checkbox" id="favoritesOnly"> 🔥 Only show/route favorites</label>
+    </div>
+
+    <h3>Car Types to Track</h3>
+    <p class="hint-text">Popular store types are added automatically but may not be exactly right — tap ✏️ Edit on a store after your first hunt to correct its inventory types so future filtering is accurate.</p>
+    <div id="carTypeList"></div>
+    <div class="inline-row">
+      <input type="text" id="newCarType" placeholder="e.g. Johnny Lightning">
+      <button class="btn-tiny" id="addCarTypeBtn">+ Add</button>
+    </div>
+
+    <h3>Custom Store</h3>
+    <div class="field"><label>Name</label><input type="text" id="customName" placeholder="e.g. Joe's Hardware"></div>
+    <div class="field"><label>Address</label><input type="text" id="customAddr" placeholder="Street, City, State"></div>
+    <button class="btn-tiny" type="button" id="customMoreToggle">▾ More options</button>
+    <div id="customMoreFields" style="display:none;margin-top:12px;">
+      <div class="field">
+        <label>Category</label>
+        <select id="customCat">
+          <option>Gas Station</option><option>Hardware Store</option><option>Toy Store</option>
+          <option>Grocery</option><option>Dollar Store</option><option>Drug Store</option><option>Auto Parts</option><option>Other</option>
+        </select>
+      </div>
+      <div class="field"><label>Car types found here</label><div id="customCarTypesList"></div></div>
+      <div class="field"><label>Notes</label><textarea id="customNotes" placeholder="Staff tips, best aisle, restock pattern..."></textarea></div>
+      <div class="field"><label class="plain"><input type="checkbox" id="customFavorite"> 🔥 Favorite</label></div>
+    </div>
+    <button class="btn" id="addCustomBtn" style="margin-top:10px;">+ Add Custom Store</button>
+  </section>
+
+  <section class="tab-panel" id="panel-route">
+    <h3>Start / End</h3>
     <div class="field">
       <label>Start</label>
       <select id="startSelect"></select>
@@ -280,48 +334,14 @@
       <input type="text" id="endAddrInput" placeholder="Enter end address" style="display:none;margin-top:6px;">
     </div>
 
-    <h3>Filters</h3>
-    <div class="field">
-      <label for="seriesFilter">Filter route/display by car type</label>
-      <select id="seriesFilter"></select>
-    </div>
-    <div class="field">
-      <label class="plain"><input type="checkbox" id="favoritesOnly"> 🔥 Only show/route favorites</label>
-    </div>
-
-    <h3>Store Groups</h3>
-    <p class="hint-text">Check the chains you want, then press HUNT! above. Unchecking never deletes stores you've already found.</p>
-    <div id="catGroups"></div>
-
-    <h3>Car Types to Track</h3>
-    <div id="carTypeList"></div>
-    <div class="inline-row">
-      <input type="text" id="newCarType" placeholder="e.g. Johnny Lightning">
-      <button class="btn-tiny" id="addCarTypeBtn">+ Add</button>
-    </div>
-
-    <h3>Custom Store</h3>
-    <div class="field"><label>Name</label><input type="text" id="customName" placeholder="e.g. Joe's Hardware"></div>
-    <div class="field">
-      <label>Category</label>
-      <select id="customCat">
-        <option>Gas Station</option><option>Hardware Store</option><option>Toy Store</option>
-        <option>Grocery</option><option>Dollar Store</option><option>Drug Store</option><option>Auto Parts</option><option>Other</option>
-      </select>
-    </div>
-    <div class="field"><label>Address</label><input type="text" id="customAddr" placeholder="Street, City, State"></div>
-    <button class="btn" id="addCustomBtn">+ Add Custom Store</button>
-  </section>
-
-  <section class="tab-panel" id="panel-route">
     <div class="route-actions-row">
-      <button class="btn secondary" id="generateRouteBtn">Generate Route</button>
+      <button class="btn secondary" id="generateRouteBtn" disabled>Generate Route</button>
       <button class="btn teal" id="openMapsBtn" disabled>Open in Maps</button>
-      <button class="btn secondary" id="clearBoardBtn">Clear board</button>
+      <button class="btn secondary" id="clearBoardBtn">Show route</button>
     </div>
     <p class="hint-text" id="routeCount">0 stops ready</p>
     <h3>Route Order</h3>
-    <p class="hint-text">Tap a store to view it. Use ▲▼ to reorder stops.</p>
+    <p class="hint-text">Tap a store to view it. After generating a route, use ▲▼ to reorder stops.</p>
     <div id="routeListPanel"></div>
   </section>
 
@@ -644,26 +664,42 @@ document.getElementById('huntBtn').addEventListener('click', async ()=>{
   if(!center) return;
   const checked = Array.from(document.querySelectorAll('input[data-chain]:checked'));
   if(checked.length===0){ alert('Check at least one store type first.'); return; }
+  const checkedChainNames = checked.map(cb=> cb.dataset.chain);
 
   // clear any stale route from a previous hunt so results aren't mixed up
   currentRoute = null;
   if(routeLayer) routeLayer.clearLayers();
   document.getElementById('openMapsBtn').disabled = true;
-  document.getElementById('generateRouteBtn').disabled = false;
+  updateGenerateBtnReadiness();
+
+  // remove auto-found stores that no longer match the current criteria — but only if
+  // the user hasn't personalized them (no notes/photos/favorite/hunted/restock/avoid),
+  // so re-hunting can never silently delete anything you've actually touched
+  const isUntouched = s => !s.favorite && !s.avoid && !s.lastChecked && !s.restockDay && !s.notes && (!s.photos || s.photos.length===0);
+  stores = stores.filter(s=>{
+    if(!s.auto || !s.chain) return true;
+    if(checkedChainNames.includes(s.chain)) return true;
+    return !isUntouched(s);
+  });
+  if(selectedStoreId && !stores.some(s=> s.id===selectedStoreId)) selectedStoreId = null;
 
   const btn = document.getElementById('huntBtn');
   const original = btn.textContent;
   btn.disabled = true;
   huntInProgress = true;
+  const spinnerText = document.getElementById('huntSpinnerText');
   document.getElementById('huntSpinnerOverlay').classList.add('show');
   render(); // keeps Route Details greyed out for the duration of the hunt
   for(let i=0;i<checked.length;i++){
+    const remaining = checked.length - i;
     btn.textContent = `Hunting… ${i+1}/${checked.length}`;
+    spinnerText.textContent = `Hunting… ${i+1}/${checked.length} (~${remaining*2}s left)`;
     await searchChain(checked[i].dataset.chain, checked[i].dataset.groupLabel);
   }
   btn.textContent = original;
   huntInProgress = false;
   document.getElementById('huntSpinnerOverlay').classList.remove('show');
+  spinnerText.textContent = 'Hunting…';
   // stays disabled until a hunt-setup variable actually changes (see reEnableHunt below)
   render();
   openTabForce('route');
@@ -673,40 +709,67 @@ document.getElementById('centerInput').addEventListener('input', reEnableHunt);
 document.getElementById('radius').addEventListener('input', reEnableHunt);
 
 /* ---------- car types ---------- */
-function populateSeriesFilter(){
-  const sel = document.getElementById('seriesFilter');
-  const prev = sel.value || 'all';
-  sel.innerHTML = '<option value="all">All stores</option>' + carTypes.map(t=> `<option value="${esc(t)}">Has ${esc(t)}</option>`).join('');
-  if([...sel.options].some(o=>o.value===prev)) sel.value = prev;
+function getCheckedTypeFilters(){
+  return Array.from(document.querySelectorAll('#typeFilterList [data-type-filter]:checked')).map(cb=> cb.dataset.typeFilter);
+}
+function populateTypeFilterList(){
+  const el = document.getElementById('typeFilterList');
+  const prevChecked = getCheckedTypeFilters();
+  el.innerHTML = carTypes.length
+    ? carTypes.map(t=> `<label class="plain type-filter-item"><input type="checkbox" data-type-filter="${esc(t)}" ${prevChecked.includes(t)?'checked':''}> ${esc(t)}</label>`).join('')
+    : '<p class="hint-text">No car types yet — add some below.</p>';
+  el.querySelectorAll('[data-type-filter]').forEach(cb=> cb.addEventListener('change', render));
+}
+function populateCustomCarTypesList(){
+  const el = document.getElementById('customCarTypesList');
+  if(!el) return;
+  el.innerHTML = carTypes.length
+    ? carTypes.map(t=> `<label class="plain type-filter-item"><input type="checkbox" data-custom-cartype="${esc(t)}"> ${esc(t)}</label>`).join('')
+    : '<p class="hint-text">No car types yet.</p>';
 }
 function renderCarTypes(){
   const el = document.getElementById('carTypeList');
   el.innerHTML = carTypes.map((t,i)=> `<span class="cartype-chip">${esc(t)} <button data-idx="${i}" class="cartype-remove" title="Remove type">✕</button></span>`).join('');
   el.querySelectorAll('.cartype-remove').forEach(btn=> btn.addEventListener('click', ()=>{
     carTypes.splice(parseInt(btn.dataset.idx,10),1);
-    saveCarTypes(); renderCarTypes(); populateSeriesFilter(); render();
+    saveCarTypes(); renderCarTypes(); render();
   }));
-  populateSeriesFilter();
+  populateTypeFilterList();
+  populateCustomCarTypesList();
 }
 document.getElementById('addCarTypeBtn').addEventListener('click', ()=>{
   const val = document.getElementById('newCarType').value.trim();
   if(!val || carTypes.includes(val)) return;
   carTypes.push(val); saveCarTypes(); document.getElementById('newCarType').value=''; renderCarTypes();
 });
-document.getElementById('seriesFilter').addEventListener('change', render);
 document.getElementById('favoritesOnly').addEventListener('change', render);
+
+/* ---------- custom store: expandable "more options" ---------- */
+document.getElementById('customMoreToggle').addEventListener('click', ()=>{
+  const box = document.getElementById('customMoreFields');
+  const showing = box.style.display !== 'none';
+  box.style.display = showing ? 'none' : 'block';
+  document.getElementById('customMoreToggle').textContent = showing ? '▾ More options' : '▴ Fewer options';
+});
 
 /* ---------- custom store ---------- */
 document.getElementById('addCustomBtn').addEventListener('click', async ()=>{
   const name = document.getElementById('customName').value.trim();
-  if(!name) return;
-  const cat = document.getElementById('customCat').value;
   const addr = document.getElementById('customAddr').value.trim();
+  if(!name || !addr){ alert('Name and address are required for a custom store.'); return; }
+  const cat = document.getElementById('customCat').value;
   const s = makeStore(name, cat, false);
   s.address = addr;
   if(addr){ const c = await geocodeAddress(addr); if(c){ s.lat=c.lat; s.lon=c.lon; } }
+  document.querySelectorAll('#customCarTypesList [data-custom-cartype]:checked').forEach(cb=>{ s.carTags[cb.dataset.customCartype] = true; });
+  s.notes = document.getElementById('customNotes').value.trim();
+  s.favorite = document.getElementById('customFavorite').checked;
   stores.push(s);
-  document.getElementById('customName').value=''; document.getElementById('customAddr').value='';
+  document.getElementById('customName').value=''; document.getElementById('customAddr').value=''; document.getElementById('customNotes').value='';
+  document.getElementById('customFavorite').checked = false;
+  document.querySelectorAll('#customCarTypesList [data-custom-cartype]').forEach(cb=> cb.checked=false);
+  document.getElementById('customMoreFields').style.display = 'none';
+  document.getElementById('customMoreToggle').textContent = '▾ More options';
   save();
 });
 
@@ -743,18 +806,73 @@ document.getElementById('bombBtn').addEventListener('click', ()=>{
   }
 });
 
-/* ---------- clear board: route settings only ---------- */
-document.getElementById('clearBoardBtn').addEventListener('click', ()=>{
-  currentRoute = null;
-  if(routeLayer) routeLayer.clearLayers();
-  document.getElementById('startAddrInput').value=''; document.getElementById('startAddrInput').style.display='none';
-  document.getElementById('endAddrInput').value=''; document.getElementById('endAddrInput').style.display='none';
-  document.getElementById('openMapsBtn').disabled = true;
-  document.getElementById('generateRouteBtn').disabled = false;
-  populateRouteSelects();
-  renderRouteList();
-  updateMap();
+/* ---------- export / import (backup + transfer to another device) ---------- */
+document.getElementById('exportBtn').addEventListener('click', ()=>{
+  const data = { stores, hunts, carTypes, targets, exportedAt: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `treasure-hunt-tracker-backup-${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 });
+document.getElementById('importInput').addEventListener('change', (e)=>{
+  const file = e.target.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    let data;
+    try{ data = JSON.parse(reader.result); }
+    catch(err){ alert('That file could not be read — make sure it is a JSON backup exported from this app.'); e.target.value=''; return; }
+    if(!confirm('Import this file? This replaces all current stores, hunts, car types, and Hot List entries on this device.')){ e.target.value=''; return; }
+    if(Array.isArray(data.stores)) stores = data.stores;
+    if(Array.isArray(data.hunts)) hunts = data.hunts;
+    if(Array.isArray(data.carTypes)) carTypes = data.carTypes;
+    if(Array.isArray(data.targets)) targets = data.targets;
+    storage.set('ph_stores', JSON.stringify(stores));
+    storage.set('ph_hunts', JSON.stringify(hunts));
+    storage.set('ph_cartypes', JSON.stringify(carTypes));
+    storage.set('ph_targets', JSON.stringify(targets));
+    populateHuntSelect(); renderCarTypes(); render(); renderTargets();
+    e.target.value = '';
+    alert('Import complete.');
+  };
+  reader.readAsText(file);
+});
+
+/* ---------- clear board: route settings only ---------- */
+let routeVisible = true;
+document.getElementById('clearBoardBtn').addEventListener('click', async ()=>{
+  if(!currentRoute){ alert('Generate a route first.'); return; }
+  routeVisible = !routeVisible;
+  const btn = document.getElementById('clearBoardBtn');
+  if(routeVisible){
+    await drawRoute([currentRoute.start, ...currentRoute.ordered, currentRoute.end]);
+    btn.textContent = 'Hide route';
+  } else {
+    routeLayer.clearLayers();
+    btn.textContent = 'Show route';
+  }
+});
+
+function startEndReady(){
+  const sv = document.getElementById('startSelect').value;
+  const ev = document.getElementById('endSelect').value;
+  const sOk = sv && (sv!=='custom' || document.getElementById('startAddrInput').value.trim());
+  const eOk = ev && (ev!=='custom' || document.getElementById('endAddrInput').value.trim());
+  return !!(sOk && eOk);
+}
+function updateGenerateBtnReadiness(){
+  const btn = document.getElementById('generateRouteBtn');
+  if(!startEndReady()){ btn.disabled = true; return; }
+  if(!currentRoute) btn.disabled = false; // otherwise leave as-is (may be intentionally disabled post-generate)
+}
+['change'].forEach(evt=>{
+  document.getElementById('startSelect').addEventListener(evt, updateGenerateBtnReadiness);
+  document.getElementById('endSelect').addEventListener(evt, updateGenerateBtnReadiness);
+});
+document.getElementById('startAddrInput').addEventListener('input', updateGenerateBtnReadiness);
+document.getElementById('endAddrInput').addEventListener('input', updateGenerateBtnReadiness);
 
 /* ---------- saved hunts ---------- */
 function populateHuntSelect(){
@@ -771,7 +889,7 @@ document.getElementById('saveHuntBtn').addEventListener('click', ()=>{
     radius: document.getElementById('radius').value,
     homeAddress: document.getElementById('homeAddress').value.trim(),
     chains: checkedChains,
-    seriesFilter: document.getElementById('seriesFilter').value,
+    typeFilters: getCheckedTypeFilters(),
     favoritesOnly: document.getElementById('favoritesOnly').checked,
     createdAt: new Date().toISOString().slice(0,10)
   });
@@ -789,8 +907,8 @@ document.getElementById('loadHuntBtn').addEventListener('click', async ()=>{
   document.getElementById('favoritesOnly').checked = !!hunt.favoritesOnly;
   document.getElementById('homeAddress').dispatchEvent(new Event('change'));
   await ensureSearchCenter();
-  populateSeriesFilter();
-  document.getElementById('seriesFilter').value = hunt.seriesFilter || 'all';
+  populateTypeFilterList();
+  document.querySelectorAll('#typeFilterList [data-type-filter]').forEach(cb=>{ cb.checked = (hunt.typeFilters||[]).includes(cb.dataset.typeFilter); });
   document.querySelectorAll('.cat-group').forEach(g=> g.classList.add('open'));
   document.querySelectorAll('input[data-chain]').forEach(cb=>{ cb.checked = hunt.chains.includes(cb.dataset.chain); });
   document.querySelectorAll('.cat-group').forEach(wrap=> syncCategoryMasterState(wrap));
@@ -816,6 +934,9 @@ function setTab(name){
   if(!isOpen){
     document.getElementById(TAB_PANELS[name]).classList.add('open');
     btn.classList.add('active');
+    setTimeout(()=> document.getElementById(TAB_PANELS[name]).scrollIntoView({ behavior:'smooth', block:'start' }), 120);
+  } else {
+    document.querySelector('.tab-buttons').scrollIntoView({ behavior:'smooth', block:'start' });
   }
 }
 function openTabForce(name){
@@ -823,6 +944,7 @@ function openTabForce(name){
   document.querySelectorAll('.tab-btn').forEach(b=> b.classList.remove('active'));
   document.getElementById(TAB_PANELS[name]).classList.add('open');
   document.querySelector(`.tab-btn[data-tab="${name}"]`).classList.add('active');
+  setTimeout(()=> document.getElementById(TAB_PANELS[name]).scrollIntoView({ behavior:'smooth', block:'start' }), 120);
 }
 document.querySelectorAll('.tab-btn').forEach(btn=> btn.addEventListener('click', ()=> setTab(btn.dataset.tab)));
 
@@ -945,9 +1067,9 @@ async function drawRoute(points){
 function daysOverdue(store){ if(!store.restockDay) return false; return store.restockDay < new Date().toISOString().slice(0,10); }
 function passesFilter(store){
   if(document.getElementById('favoritesOnly').checked && !store.favorite) return false;
-  const f = document.getElementById('seriesFilter').value;
-  if(f==='all') return true;
-  return !!(store.carTags && store.carTags[f]);
+  const checkedTypes = getCheckedTypeFilters();
+  if(checkedTypes.length === 0) return true;
+  return checkedTypes.some(t=> store.carTags && store.carTags[t]);
 }
 
 function populateRouteSelects(){
@@ -1066,9 +1188,11 @@ function renderStoreDetail(){
           <div><span class="meta-label">Last hunted</span><span class="meta-value">${store.lastChecked || 'never'}</span></div>
           <div><span class="meta-label">Next restock</span><span class="meta-value">${store.restockDay || 'not set'}${daysOverdue(store)?' <span class="overdue">⚠</span>':''}</span></div>
         </div>
+      </div>
+      <div class="card-photo-col">
+        ${photoColHtml}
         ${store.notes ? `<div class="notes-display">${esc(store.notes)}</div>` : `<div class="notes-display notes-empty">No notes yet — tap Edit to add some.</div>`}
       </div>
-      <div class="card-photo-col">${photoColHtml}</div>
     </div>
     <div class="card-actions">
       ${lastPhoto ? `<label class="upload">📷 Add photo<input type="file" accept="image/*" data-role="photo" style="display:none;"></label>` : ''}
@@ -1116,6 +1240,11 @@ function render(){
   document.querySelector('.tab-btn[data-tab="route"]').disabled = huntInProgress || stores.length === 0;
   const routable = stores.filter(s=> !s.avoid && s.address);
   document.getElementById('routeCount').textContent = `${routable.length} stop${routable.length===1?'':'s'} available for the route`;
+  const hasFavorites = stores.some(s=> s.favorite);
+  const favField = document.getElementById('favoritesOnlyField');
+  if(!hasFavorites){ document.getElementById('favoritesOnly').checked = false; favField.style.display = 'none'; }
+  else favField.style.display = '';
+  updateGenerateBtnReadiness();
 }
 
 /* ---------- 🔥 Hot List (wishlist targets) ---------- */
@@ -1136,7 +1265,7 @@ function renderTargets(){
   targets.forEach(t=>{
     const row = document.createElement('div');
     row.className = 'target-row' + (t.found ? ' found' : '');
-    row.innerHTML = `<input type="checkbox" data-role="found" ${t.found?'checked':''}><span class="rli-label">${esc(t.name)}</span>`;
+    row.innerHTML = `<input type="checkbox" data-role="found" ${t.found?'checked':''}><span class="rli-label">${esc(t.name)}</span><span class="edit-pencil" title="Tap name to add details">✏️</span>`;
     row.querySelector('[data-role=found]').addEventListener('change', e=>{
       t.found = e.target.checked;
       t.foundDate = t.found ? new Date().toISOString().slice(0,10) : '';
@@ -1163,7 +1292,7 @@ function renderTargetDetail(){
       <div class="field" style="margin-top:30px;"><label>Name</label><input type="text" id="editTargetName" value="${esc(t.name)}"></div>
       <div class="field"><label>Notes</label><textarea id="editTargetNotes">${esc(t.notes)}</textarea></div>
       <div class="card-actions">
-        <button class="btn small teal" data-role="saveEdit">Save</button>
+        <button class="btn small teal" data-role="saveEdit">💾 Save &amp; Close</button>
         <button class="btn small secondary" data-role="cancelEdit">Cancel</button>
       </div>`;
     wrap.appendChild(card);
@@ -1185,7 +1314,7 @@ function renderTargetDetail(){
     ${lastPhoto?`<img class="peg-photo square-photo" data-role="photoThumb" src="${lastPhoto.dataUrl}" style="max-width:220px;">`:''}
     <textarea class="notes" readonly placeholder="No notes yet — click Edit to add some.">${esc(t.notes)}</textarea>
     <div class="card-actions">
-      <label class="upload">📷 Photo<input type="file" accept="image/*" data-role="photo" style="display:none;"></label>
+      <label class="btn small secondary" data-role="photo">📷 Photo<input type="file" accept="image/*" data-role="photoInput" style="display:none;"></label>
       <button class="btn small secondary" data-role="editBtn">✏️ Edit</button>
       <button class="btn small secondary" data-role="remove">Remove</button>
     </div>`;
@@ -1199,7 +1328,7 @@ function renderTargetDetail(){
       saveTargets();
     }
   });
-  q('[data-role=photo]').addEventListener('change', e=>{
+  q('[data-role=photoInput]').addEventListener('change', e=>{
     const file=e.target.files[0]; if(!file) return;
     const reader=new FileReader();
     reader.onload=()=>{ t.photos.push({ date:new Date().toISOString().slice(0,10), dataUrl:reader.result }); saveTargets(); renderTargetDetail(); };
@@ -1276,9 +1405,9 @@ document.getElementById('generateRouteBtn').addEventListener('click', async ()=>
   const startVal = document.getElementById('startSelect').value;
   const endVal = document.getElementById('endSelect').value;
   const start = await resolvePoint(startVal, 'startAddrInput');
-  if(!start || !start.address){ alert('Pick or enter a valid start point in Hunt Setup.'); return; }
+  if(!start || !start.address){ alert('Pick or enter a valid start point.'); return; }
   const end = endVal==='loop' ? start : await resolvePoint(endVal, 'endAddrInput');
-  if(!end || !end.address){ alert('Pick or enter a valid end point in Hunt Setup.'); return; }
+  if(!end || !end.address){ alert('Pick or enter a valid end point.'); return; }
 
   let stops = stores.filter(s=> !s.avoid && s.address && passesFilter(s));
   if(start.id) stops = stops.filter(s=> s.id!==start.id);
@@ -1286,10 +1415,12 @@ document.getElementById('generateRouteBtn').addEventListener('click', async ()=>
 
   const ordered = orderStops(start, stops);
   currentRoute = { start, ordered, end };
+  routeVisible = true;
   await drawRoute([start, ...ordered, end]);
   renderRouteList();
   document.getElementById('openMapsBtn').disabled = false;
   document.getElementById('generateRouteBtn').disabled = true;
+  document.getElementById('clearBoardBtn').textContent = 'Hide route';
 });
 
 document.getElementById('openMapsBtn').addEventListener('click', ()=>{
@@ -1313,6 +1444,7 @@ populateHuntSelect();
 renderCarTypes();
 render();
 renderTargets();
+updateGenerateBtnReadiness();
 setTimeout(syncChainCheckboxes, 0);
 </script>
 </body>
