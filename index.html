@@ -31,10 +31,8 @@
 
   header{display:grid; grid-template-columns:auto 1fr auto; align-items:center; padding:28px 18px; background:var(--bg-panel);}
   .header-logo{height:76px; width:auto;}
-  header h1{font-family:'Anton',sans-serif; text-transform:uppercase; margin:0; text-align:center; letter-spacing:.01em; min-width:0;
-    font-size:1.5rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; transform:scaleY(1.6); transform-origin:center;
-    background:linear-gradient(90deg, var(--flame1), var(--flame2) 60%, var(--flame3)); -webkit-background-clip:text; background-clip:text; color:transparent;}
-  @media (max-width:380px){ header h1{font-size:1.1rem;} .header-logo{height:58px;} }
+  .header-banner{max-height:76px; width:100%; height:auto; object-fit:contain; min-width:0; padding:0 10px; box-sizing:border-box;}
+  @media (max-width:380px){ .header-logo{height:58px;} .header-banner{max-height:58px;} }
   .hamburger-btn{background:none; border:1px solid #34343a; color:var(--ink); border-radius:8px; font-size:1.4rem; padding:10px 14px; cursor:pointer; line-height:1;}
 
   .menu-overlay{position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:5000; display:none;}
@@ -66,7 +64,8 @@
   .hunt-spinner-overlay.show{display:flex;}
   @keyframes spinWheel{ to{ transform:rotate(360deg); } }
   .hunt-spinner-wheel{width:128px; height:128px; animation:spinWheel 0.9s linear infinite;}
-  .hunt-spinner-overlay span{font-family:'Anton',sans-serif; text-transform:uppercase; letter-spacing:.05em; color:var(--flame1); font-size:2.1rem;}
+  .hunt-spinner-overlay span{font-family:'Anton',sans-serif; text-transform:uppercase; letter-spacing:.04em; color:var(--flame1); font-size:1.4rem; line-height:1.5; text-align:center; padding:0 10px;}
+
   .leaflet-popup-content-wrapper{background:#1b1b1e; color:var(--ink);}
   .leaflet-popup-tip{background:#1b1b1e;}
   .leaflet-popup-content{font-family:'Rajdhani',sans-serif; font-size:0.9rem;}
@@ -75,7 +74,7 @@
   @keyframes pulseGlow{ 0%,100%{ opacity:0.12; } 50%{ opacity:0.6; } }
   .pulse-marker{ animation: pulseGlow 1.6s ease-in-out infinite; }
 
-  .tab-buttons{display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;}
+  .tab-buttons{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
   .tab-btn{background:var(--card-2); border:1px solid var(--line); color:var(--ink); border-radius:8px; padding:12px 6px; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:0.86rem; cursor:pointer; text-align:center;}
   .tab-btn.active{background:linear-gradient(90deg, var(--flame1), var(--flame2)); color:#141416; border-color:transparent;}
   .tab-btn:disabled{opacity:.35; cursor:not-allowed;}
@@ -159,6 +158,9 @@
   .square-photo{aspect-ratio:1/1 !important; max-height:none !important; object-fit:cover;}
   .card-photo-col .peg-photo, .photo-placeholder{width:100%; aspect-ratio:1/1; margin-bottom:0;}
   .photo-placeholder{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; border:2px dashed var(--line); border-radius:8px; color:var(--ink-soft); font-size:0.68rem; text-align:center; cursor:pointer; padding:4px;}
+  .placeholder-logo{width:55%; height:auto; opacity:0.55; margin-bottom:2px;}
+  @keyframes cardWipeIn{ from{ opacity:0; max-height:0; } to{ opacity:1; max-height:2400px; } }
+  .store-card.wipe-in{ animation: cardWipeIn .35s ease forwards; overflow:hidden; }
   .photo-placeholder span:first-child{font-size:1.6rem;}
   .store-card .addr{font-size:0.84rem; color:var(--ink-soft); margin-bottom:8px; word-break:break-word;}
   .status-pill{display:inline-block; font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; padding:4px 10px; border-radius:999px; margin-bottom:10px;}
@@ -190,6 +192,13 @@
 
   footer{text-align:center; padding:20px 10px 34px; color:#57565c; font-size:0.72rem;}
 
+  .go-pro-btn{background:linear-gradient(90deg, var(--flame1), var(--flame2)); color:#141416; margin-bottom:10px;}
+  .info-modal-overlay{position:fixed; inset:0; background:rgba(4,4,5,0.85); display:none; align-items:center; justify-content:center; z-index:9998; padding:20px;}
+  .info-modal-overlay.show{display:flex;}
+  .info-modal{position:relative; background:var(--bg-panel); border-radius:10px; border:1px solid var(--line); max-width:420px; width:100%; padding:24px 22px; box-shadow:0 10px 40px rgba(0,0,0,.6);}
+  .info-modal h2{font-family:'Anton',sans-serif; text-transform:uppercase; color:var(--flame2); margin:0 0 10px; font-size:1.3rem;}
+  .info-modal p{font-size:0.9rem; color:var(--ink-soft); line-height:1.5;}
+  .info-modal ul{padding-left:20px; font-size:0.88rem; color:var(--ink-soft); line-height:1.7;}
   .lightbox-overlay{position:fixed; inset:0; background:rgba(4,4,5,0.92); display:none; align-items:center; justify-content:center; z-index:9999; padding:20px;}
   .lightbox-frame{background:var(--bg-panel); border-radius:10px; border:6px solid #0b0b0d; max-width:640px; width:100%; overflow:hidden; box-shadow:0 10px 40px rgba(0,0,0,0.7);}
   .lightbox-titlebar{display:flex; justify-content:space-between; align-items:center; padding:8px 14px; background:#0b0b0d; color:var(--ink); font-size:0.8rem;}
@@ -204,7 +213,7 @@
 
 <header>
   <img src="THT_No_Background.png" alt="Treasure Hunt Tracker" class="header-logo" onerror="this.style.display='none'; console.error('Header logo failed to load — check that THT_No_Background.png is committed at the site root and the filename matches exactly.');">
-  <h1>Treasure Hunt Tracker</h1>
+  <img src="THT_Banner.png" alt="Treasure Hunt Tracker" class="header-banner" onerror="this.style.display='none';">
   <button class="hamburger-btn" id="menuBtn">☰</button>
 </header>
 <div class="checker-stripe"></div>
@@ -212,6 +221,8 @@
 <div class="menu-overlay" id="menuOverlay"></div>
 <div class="menu-drawer" id="menuDrawer">
   <button class="menu-close" id="menuCloseBtn">✕</button>
+
+  <button class="btn menu-full-btn go-pro-btn" id="goProBtn">⭐ Go Pro</button>
 
   <h2>Saved Hunts</h2>
   <select id="huntSelect" class="menu-select"><option value="">— saved hunts —</option></select>
@@ -233,6 +244,7 @@
     <li>Open <strong>Hunt Setup</strong> — check store types, tap HUNT!.</li>
     <li>Tap a map pin, or an item in Route Details, to see that store's card.</li>
     <li>Open <strong>Route Details</strong> to set Start/End, generate your route, and send it to Google Maps.</li>
+    <li><strong>📦 Saved Stores</strong> lists everything you've ever found — build a route from just the ones you check.</li>
     <li>Track wishlist cars in <strong>🔥 Hot List</strong>.</li>
     <li>On your phone in Chrome, open the browser menu and tap "Install and create shortcut" to add this to your home screen.</li>
   </ol>
@@ -244,13 +256,14 @@
     <button class="btn menu-full-btn" id="bombBtn">💣 Clear All Data</button>
   </div>
 
-  <p class="app-version">v1.1 — July 2026</p>
+  <p class="app-version">v1.2 — Jul 17, 2026 · 3:00 PM</p>
 </div>
 
 <main class="stack">
   <div class="tab-buttons">
     <button class="tab-btn" data-tab="setup">⚙️ Hunt Setup</button>
     <button class="tab-btn" data-tab="route">🗺️ Route Details</button>
+    <button class="tab-btn" data-tab="saved">📦 Saved Stores</button>
     <button class="tab-btn" data-tab="notes">🔥 Hot List</button>
   </div>
 
@@ -275,15 +288,12 @@
 
   <section class="tab-panel" id="panel-setup">
     <button class="hunt-cta-panel" id="huntBtn">🎯 HUNT!</button>
+    <p class="hint-text" style="margin-top:-10px;">Finds all the stores in your area that meet the criteria below.</p>
 
-    <h3>Radius &amp; Home</h3>
+    <h3>Search Radius</h3>
     <div class="field">
       <label for="radius">Search radius <span class="radius-val" id="radiusVal">10 mi</span></label>
       <input type="range" id="radius" min="1" max="50" value="10">
-    </div>
-    <div class="field">
-      <label for="homeAddress">Home address (for route start/end)</label>
-      <input type="text" id="homeAddress" placeholder="Your address">
     </div>
 
     <h3>Filters</h3>
@@ -325,6 +335,12 @@
   </section>
 
   <section class="tab-panel" id="panel-route">
+    <h3>Home Address</h3>
+    <div class="field">
+      <label for="homeAddress">Home address (for route start/end)</label>
+      <input type="text" id="homeAddress" placeholder="Your address">
+    </div>
+
     <h3>Start / End</h3>
     <div class="field">
       <label>Start</label>
@@ -348,6 +364,13 @@
     <div id="routeListPanel"></div>
   </section>
 
+  <section class="tab-panel" id="panel-saved">
+    <h3>📦 Saved Stores</h3>
+    <p class="hint-text">Every store you've found across every hunt, all in one place. Check the ones you want, then build a route from just those — set your Start/End in Route Details first.</p>
+    <div id="savedStoresList"></div>
+    <button class="btn" id="routeFromSavedBtn" style="margin-top:12px;width:100%;">🧭 Route from Saved Stores</button>
+  </section>
+
   <section class="tab-panel" id="panel-notes">
     <h3>🔥 Hot List — cars you're hunting for</h3>
     <div class="inline-row" style="margin-bottom:12px;">
@@ -359,7 +382,14 @@
   </section>
 </main>
 
-<footer>Everything is stored locally in this browser — nothing is sent to a server except free map/search lookups (OpenStreetMap + OSRM).</footer>
+<footer>Nothing is stored on a server — everything stays on this device. Want your data on another device? Export it here (☰ menu) and import it there.</footer>
+
+<div class="info-modal-overlay" id="infoModalOverlay">
+  <div class="info-modal">
+    <button class="menu-close" id="infoModalClose">✕</button>
+    <div id="infoModalBody"></div>
+  </div>
+</div>
 
 <div class="lightbox-overlay" id="lightboxOverlay">
   <div class="lightbox-frame">
@@ -609,7 +639,7 @@ async function searchChain(chain, groupLabel, externalSignal){
   }catch(e){
     if(e.message === 'Cancelled by user'){ if(rowStatus) rowStatus.textContent = 'cancelled'; throw e; }
     console.error('Search failed for', chain, e);
-    if(rowStatus) rowStatus.textContent = 'failed after 15s (see console) — try a smaller radius for this chain';
+    if(rowStatus) rowStatus.textContent = 'search failed — try a smaller radius';
   }
 }
 
@@ -716,10 +746,10 @@ document.getElementById('huntBtn').addEventListener('click', async ()=>{
   try{
     for(let i=0;i<checked.length;i++){
       if(huntAbortController.signal.aborted) break;
-      const remaining = checked.length - i;
+      const chainName = checked[i].dataset.chain;
       btn.textContent = `Hunting… ${i+1}/${checked.length}`;
-      spinnerText.textContent = `Hunting… ${i+1}/${checked.length} (~${remaining*2}s left, 15s timeout per chain)`;
-      await searchChain(checked[i].dataset.chain, checked[i].dataset.groupLabel, huntAbortController.signal);
+      spinnerText.innerHTML = `Hunting<br>${esc(chainName)}<br>${i+1}/${checked.length}`;
+      await searchChain(chainName, checked[i].dataset.groupLabel, huntAbortController.signal);
     }
   }catch(e){
     if(e.message !== 'Cancelled by user') console.error('Hunt loop error:', e);
@@ -821,6 +851,28 @@ function closeMenu(){ document.getElementById('menuDrawer').classList.remove('op
 document.getElementById('menuBtn').addEventListener('click', openMenu);
 document.getElementById('menuCloseBtn').addEventListener('click', closeMenu);
 document.getElementById('menuOverlay').addEventListener('click', closeMenu);
+
+/* ---------- info modal (Go Pro announcement) ---------- */
+function showInfoModal(html){
+  document.getElementById('infoModalBody').innerHTML = html;
+  document.getElementById('infoModalOverlay').classList.add('show');
+}
+function closeInfoModal(){ document.getElementById('infoModalOverlay').classList.remove('show'); }
+document.getElementById('infoModalClose').addEventListener('click', closeInfoModal);
+document.getElementById('infoModalOverlay').addEventListener('click', (e)=>{ if(e.target.id==='infoModalOverlay') closeInfoModal(); });
+document.getElementById('goProBtn').addEventListener('click', ()=>{
+  closeMenu();
+  showInfoModal(`
+    <h2>⭐ Pro — Coming Soon</h2>
+    <p>Pro is on the way with:</p>
+    <ul>
+      <li>Unlimited Hot List cars</li>
+      <li>Sign in to access your hunts from any device</li>
+      <li>Auto-load the current Treasure Hunt &amp; Super Treasure Hunt lists — with images — straight into your Hot List</li>
+    </ul>
+    <p>Stay tuned!</p>
+  `);
+});
 
 /* ---------- bomb: full wipe ---------- */
 document.getElementById('bombBtn').addEventListener('click', ()=>{
@@ -956,10 +1008,11 @@ document.getElementById('deleteHuntBtn').addEventListener('click', ()=>{
 });
 
 /* ---------- tabs ---------- */
-const TAB_PANELS = { setup:'panel-setup', route:'panel-route', notes:'panel-notes' };
+const TAB_PANELS = { setup:'panel-setup', route:'panel-route', saved:'panel-saved', notes:'panel-notes' };
 function setTab(name){
   const btn = document.querySelector(`.tab-btn[data-tab="${name}"]`);
   if(btn.disabled) return;
+  if(selectedStoreId){ selectedStoreId = null; renderStoreDetail(); }
   const isOpen = document.getElementById(TAB_PANELS[name]).classList.contains('open');
   Object.values(TAB_PANELS).forEach(pid=> document.getElementById(pid).classList.remove('open'));
   document.querySelectorAll('.tab-btn').forEach(b=> b.classList.remove('active'));
@@ -972,6 +1025,7 @@ function setTab(name){
   }
 }
 function openTabForce(name){
+  if(selectedStoreId){ selectedStoreId = null; renderStoreDetail(); }
   Object.values(TAB_PANELS).forEach(pid=> document.getElementById(pid).classList.remove('open'));
   document.querySelectorAll('.tab-btn').forEach(b=> b.classList.remove('active'));
   document.getElementById(TAB_PANELS[name]).classList.add('open');
@@ -1068,6 +1122,26 @@ function selectStore(id){
 }
 window.selectStore = selectStore;
 
+function animateCardClose(wrapId, onDone){
+  const wrap = document.getElementById(wrapId);
+  const card = wrap ? wrap.querySelector('.store-card') : null;
+  if(!card){ onDone(); return; }
+  const height = card.scrollHeight;
+  card.style.maxHeight = height + 'px';
+  card.style.overflow = 'hidden';
+  card.style.transition = 'max-height .3s ease, opacity .3s ease, margin-bottom .3s ease';
+  card.offsetHeight; // force reflow so the transition actually runs
+  requestAnimationFrame(()=>{
+    card.style.maxHeight = '0px';
+    card.style.opacity = '0';
+    card.style.marginBottom = '0px';
+  });
+  setTimeout(()=>{
+    onDone();
+    window.scrollTo({ top:0, behavior:'smooth' });
+  }, 300);
+}
+
 /* ---------- route drawing (free OSRM demo routing, falls back to straight lines) ---------- */
 async function drawRoute(points){
   routeLayer.clearLayers();
@@ -1158,7 +1232,7 @@ function renderStoreDetail(){
 
   const status = getStoreStatus(store);
   const card = document.createElement('div');
-  card.className = 'store-card';
+  card.className = 'store-card wipe-in';
   card.style.borderLeftColor = status.color;
   const q = sel => card.querySelector(sel);
 
@@ -1179,7 +1253,7 @@ function renderStoreDetail(){
         <button class="btn small secondary" data-role="cancelEdit">Cancel</button>
       </div>`;
     wrap.appendChild(card);
-    q('[data-role=closeX]').addEventListener('click', ()=>{ selectedStoreId=null; editingId=null; render(); });
+    q('[data-role=closeX]').addEventListener('click', ()=> animateCardClose('storeDetail', ()=>{ selectedStoreId=null; editingId=null; render(); }));
     q('[data-role=saveEdit]').addEventListener('click', async ()=>{
       store.name = document.getElementById('editName').value.trim() || store.name;
       const newAddr = document.getElementById('editAddr').value.trim();
@@ -1220,11 +1294,9 @@ function renderStoreDetail(){
           <div><span class="meta-label">Last hunted</span><span class="meta-value">${store.lastChecked || 'never'}</span></div>
           <div><span class="meta-label">Next restock</span><span class="meta-value">${store.restockDay || 'not set'}${daysOverdue(store)?' <span class="overdue">⚠</span>':''}</span></div>
         </div>
-      </div>
-      <div class="card-photo-col">
-        ${photoColHtml}
         ${store.notes ? `<div class="notes-display">${esc(store.notes)}</div>` : `<div class="notes-display notes-empty">No notes yet — tap Edit to add some.</div>`}
       </div>
+      <div class="card-photo-col">${photoColHtml}</div>
     </div>
     <div class="card-actions">
       ${lastPhoto ? `<label class="upload">📷 Add photo<input type="file" accept="image/*" data-role="photo" style="display:none;"></label>` : ''}
@@ -1233,7 +1305,7 @@ function renderStoreDetail(){
     </div>`;
   wrap.appendChild(card);
 
-  q('[data-role=closeX]').addEventListener('click', ()=>{ selectedStoreId=null; render(); });
+  q('[data-role=closeX]').addEventListener('click', ()=> animateCardClose('storeDetail', ()=>{ selectedStoreId=null; render(); }));
   q('[data-role=markVisited]').addEventListener('click', ()=>{
     store.lastChecked = store.lastChecked ? '' : new Date().toISOString().slice(0,10);
     save();
@@ -1269,7 +1341,9 @@ function render(){
   updateMap();
   renderRouteList();
   renderStoreDetail();
+  renderSavedStoresList();
   document.querySelector('.tab-btn[data-tab="route"]').disabled = huntInProgress || stores.length === 0;
+  document.querySelector('.tab-btn[data-tab="saved"]').disabled = stores.length === 0;
   const routable = stores.filter(s=> !s.avoid && s.address);
   document.getElementById('routeCount').textContent = `${routable.length} stop${routable.length===1?'':'s'} available for the route`;
   const hasFavorites = stores.some(s=> s.favorite);
@@ -1277,6 +1351,18 @@ function render(){
   if(!hasFavorites){ document.getElementById('favoritesOnly').checked = false; favField.style.display = 'none'; }
   else favField.style.display = '';
   updateGenerateBtnReadiness();
+}
+function renderSavedStoresList(){
+  const el = document.getElementById('savedStoresList');
+  const list = stores.filter(s=> !s.avoid);
+  if(!list.length){ el.innerHTML = '<p class="hint-text">No saved stores yet — go hunt some!</p>'; return; }
+  const prevChecked = new Set(Array.from(el.querySelectorAll('[data-saved-store]:checked')).map(cb=> cb.dataset.savedStore));
+  el.innerHTML = list.map(s=> `
+    <div class="route-list-item" style="border-left-color:${resolvedColor(getStoreStatus(s).color)};">
+      <input type="checkbox" data-saved-store="${s.id}" ${prevChecked.has(s.id)?'checked':''}>
+      <span class="rli-label" data-saved-store-label="${s.id}">${esc(s.name)}</span>
+    </div>`).join('');
+  el.querySelectorAll('[data-saved-store-label]').forEach(span=> span.addEventListener('click', ()=> selectStore(span.dataset.savedStoreLabel)));
 }
 
 /* ---------- 🔥 Hot List (wishlist targets) ---------- */
@@ -1286,8 +1372,10 @@ function makeTarget(name){
 document.getElementById('addTargetBtn').addEventListener('click', ()=>{
   const name = document.getElementById('newTargetName').value.trim();
   if(!name) return;
-  targets.push(makeTarget(name));
+  const t = makeTarget(name);
+  targets.push(t);
   document.getElementById('newTargetName').value='';
+  selectedTargetId = t.id;
   saveTargets();
 });
 function renderTargets(){
@@ -1297,7 +1385,7 @@ function renderTargets(){
   targets.forEach(t=>{
     const row = document.createElement('div');
     row.className = 'target-row' + (t.found ? ' found' : '');
-    row.innerHTML = `<input type="checkbox" data-role="found" ${t.found?'checked':''}><span class="rli-label">${esc(t.name)}</span><span class="edit-pencil" title="Tap name to add details">✏️</span>`;
+    row.innerHTML = `<input type="checkbox" data-role="found" ${t.found?'checked':''}><span class="rli-label">${esc(t.name)}</span>`;
     row.querySelector('[data-role=found]').addEventListener('change', e=>{
       t.found = e.target.checked;
       t.foundDate = t.found ? new Date().toISOString().slice(0,10) : '';
@@ -1314,7 +1402,7 @@ function renderTargetDetail(){
   const t = targets.find(x=> x.id===selectedTargetId);
   if(!t) return;
   const card = document.createElement('div');
-  card.className = 'store-card';
+  card.className = 'store-card wipe-in';
   card.style.borderLeftColor = t.found ? 'var(--green)' : 'var(--line)';
   const q = sel => card.querySelector(sel);
 
@@ -1328,30 +1416,38 @@ function renderTargetDetail(){
         <button class="btn small secondary" data-role="cancelEdit">Cancel</button>
       </div>`;
     wrap.appendChild(card);
-    q('[data-role=closeX]').addEventListener('click', ()=>{ selectedTargetId=null; editingTargetId=null; renderTargets(); });
+    q('[data-role=closeX]').addEventListener('click', ()=> animateCardClose('targetDetail', ()=>{ selectedTargetId=null; editingTargetId=null; renderTargets(); }));
     q('[data-role=saveEdit]').addEventListener('click', ()=>{
       t.name = document.getElementById('editTargetName').value.trim() || t.name;
       t.notes = document.getElementById('editTargetNotes').value;
-      editingTargetId = null; saveTargets();
+      editingTargetId = null;
+      saveTargets();
     });
     q('[data-role=cancelEdit]').addEventListener('click', ()=>{ editingTargetId=null; renderTargetDetail(); });
     return;
   }
 
   const lastPhoto = t.photos && t.photos.length ? t.photos[t.photos.length-1] : null;
+  const photoColHtml = lastPhoto
+    ? `<img class="peg-photo square-photo" data-role="photoThumb" src="${lastPhoto.dataUrl}">`
+    : `<label class="photo-placeholder target-placeholder"><img src="THT_No_Background.png" alt="" class="placeholder-logo"><span>Tap to add photo</span><input type="file" accept="image/*" data-role="photoInput" style="display:none;"></label>`;
   card.innerHTML = `
     <button class="close-x" data-role="closeX">✕</button>
     <h3 style="margin-top:30px;">${esc(t.name)}</h3>
     <span class="status-pill" style="background:${t.found?'var(--green)':'var(--card-2)'};color:${t.found?'#08201d':'var(--ink-soft)'};">${t.found ? 'Found ' + t.foundDate : 'Still hunting'}</span>
-    ${lastPhoto?`<img class="peg-photo square-photo" data-role="photoThumb" src="${lastPhoto.dataUrl}" style="max-width:220px;">`:''}
-    <textarea class="notes" readonly placeholder="No notes yet — click Edit to add some.">${esc(t.notes)}</textarea>
+    <div class="card-body-grid">
+      <div class="card-info-col">
+        ${t.notes ? `<div class="notes-display">${esc(t.notes)}</div>` : `<div class="notes-display notes-empty">No notes yet — tap Edit to add some.</div>`}
+      </div>
+      <div class="card-photo-col">${photoColHtml}</div>
+    </div>
     <div class="card-actions">
-      <label class="btn small secondary" data-role="photo">📷 Photo<input type="file" accept="image/*" data-role="photoInput" style="display:none;"></label>
+      ${lastPhoto ? `<label class="upload">📷 Add photo<input type="file" accept="image/*" data-role="photoInput2" style="display:none;"></label>` : ''}
       <button class="btn small secondary" data-role="editBtn">✏️ Edit</button>
       <button class="btn small secondary" data-role="remove">Remove</button>
     </div>`;
   wrap.appendChild(card);
-  q('[data-role=closeX]').addEventListener('click', ()=>{ selectedTargetId=null; renderTargetDetail(); });
+  q('[data-role=closeX]').addEventListener('click', ()=> animateCardClose('targetDetail', ()=>{ selectedTargetId=null; renderTargetDetail(); }));
   q('[data-role=editBtn]').addEventListener('click', ()=>{ editingTargetId = t.id; renderTargetDetail(); });
   q('[data-role=remove]').addEventListener('click', ()=>{
     if(confirm(`Remove "${t.name}" from your Hot List?`)){
@@ -1360,12 +1456,18 @@ function renderTargetDetail(){
       saveTargets();
     }
   });
-  q('[data-role=photoInput]').addEventListener('change', e=>{
-    const file=e.target.files[0]; if(!file) return;
-    const reader=new FileReader();
-    reader.onload=()=>{ t.photos.push({ date:new Date().toISOString().slice(0,10), dataUrl:reader.result }); saveTargets(); renderTargetDetail(); };
-    reader.readAsDataURL(file);
-  });
+  function wirePhotoInput(inputEl){
+    inputEl.addEventListener('change', e=>{
+      const file=e.target.files[0]; if(!file) return;
+      const reader=new FileReader();
+      reader.onload=()=>{ t.photos.push({ date:new Date().toISOString().slice(0,10), dataUrl:reader.result }); saveTargets(); renderTargetDetail(); };
+      reader.readAsDataURL(file);
+    });
+  }
+  const photoInput1 = q('[data-role=photoInput]');
+  if(photoInput1) wirePhotoInput(photoInput1);
+  const photoInput2 = q('[data-role=photoInput2]');
+  if(photoInput2) wirePhotoInput(photoInput2);
   const thumb = q('[data-role=photoThumb]');
   if(thumb) thumb.addEventListener('click', ()=> openLightbox(null, t.photos.length-1, t));
 }
@@ -1433,6 +1535,17 @@ async function resolvePoint(selectVal, customInputId){
 document.getElementById('startSelect').addEventListener('change', e=>{ document.getElementById('startAddrInput').style.display = e.target.value==='custom' ? 'block':'none'; });
 document.getElementById('endSelect').addEventListener('change', e=>{ document.getElementById('endAddrInput').style.display = e.target.value==='custom' ? 'block':'none'; });
 
+async function finalizeRoute(start, end, stops){
+  const ordered = orderStops(start, stops);
+  currentRoute = { start, ordered, end };
+  routeVisible = true;
+  await drawRoute([start, ...ordered, end]);
+  renderRouteList();
+  document.getElementById('openMapsBtn').disabled = false;
+  document.getElementById('generateRouteBtn').disabled = true;
+  document.getElementById('clearBoardBtn').textContent = 'Hide route';
+}
+
 document.getElementById('generateRouteBtn').addEventListener('click', async ()=>{
   const startVal = document.getElementById('startSelect').value;
   const endVal = document.getElementById('endSelect').value;
@@ -1444,15 +1557,24 @@ document.getElementById('generateRouteBtn').addEventListener('click', async ()=>
   let stops = stores.filter(s=> !s.avoid && s.address && passesFilter(s));
   if(start.id) stops = stops.filter(s=> s.id!==start.id);
   if(end.id) stops = stops.filter(s=> s.id!==end.id);
+  await finalizeRoute(start, end, stops);
+});
 
-  const ordered = orderStops(start, stops);
-  currentRoute = { start, ordered, end };
-  routeVisible = true;
-  await drawRoute([start, ...ordered, end]);
-  renderRouteList();
-  document.getElementById('openMapsBtn').disabled = false;
-  document.getElementById('generateRouteBtn').disabled = true;
-  document.getElementById('clearBoardBtn').textContent = 'Hide route';
+document.getElementById('routeFromSavedBtn').addEventListener('click', async ()=>{
+  const checkedIds = Array.from(document.querySelectorAll('#savedStoresList [data-saved-store]:checked')).map(cb=> cb.dataset.savedStore);
+  if(checkedIds.length===0){ alert('Check at least one saved store first.'); return; }
+  const startVal = document.getElementById('startSelect').value;
+  const endVal = document.getElementById('endSelect').value;
+  const start = await resolvePoint(startVal, 'startAddrInput');
+  if(!start || !start.address){ alert('Set a valid Start point in Route Details first.'); return; }
+  const end = endVal==='loop' ? start : await resolvePoint(endVal, 'endAddrInput');
+  if(!end || !end.address){ alert('Set a valid End point in Route Details first.'); return; }
+
+  let stops = stores.filter(s=> checkedIds.includes(s.id) && s.address);
+  if(start.id) stops = stops.filter(s=> s.id!==start.id);
+  if(end.id) stops = stops.filter(s=> s.id!==end.id);
+  await finalizeRoute(start, end, stops);
+  openTabForce('route');
 });
 
 document.getElementById('openMapsBtn').addEventListener('click', ()=>{
