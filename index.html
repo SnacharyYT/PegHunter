@@ -591,7 +591,7 @@ async function overpassFetch(query, externalSignal){
   for(const endpoint of OVERPASS_ENDPOINTS){
     if(externalSignal && externalSignal.aborted) throw new Error('Cancelled by user');
     try{
-      await throttle('overpass', 600);
+      await throttle('overpass', 1200);
       const timeoutController = new AbortController();
       const timeoutId = setTimeout(()=> timeoutController.abort(), 28000);
       const onExternalAbort = ()=> timeoutController.abort();
@@ -626,17 +626,18 @@ async function searchChain(chain, groupLabel, externalSignal){
   const query = `[out:json][timeout:25];(nwr["shop"]["name"~"${escaped}",i](around:${radiusMeters},${center.lat},${center.lon});nwr["shop"]["brand"~"${escaped}",i](around:${radiusMeters},${center.lat},${center.lon}););out center tags;`;
   try{
     const data = await overpassFetch(query, externalSignal);
-    let added = 0;
+    let added = 0, alreadyKnown = 0, totalMatched = 0;
     (data.elements||[]).forEach(el=>{
       const lat = el.lat ?? (el.center && el.center.lat);
       const lon = el.lon ?? (el.center && el.center.lon);
       if(lat==null || lon==null) return;
       const osmId = `${el.type}/${el.id}`;
-      if(stores.some(s=> s.osmId === osmId)) return;
       const tags = el.tags || {};
       const rawName = tags.name || chain;
       if(/garden cent(er|re)/i.test(rawName) || tags.shop==='garden_centre') return;
-      if(isDuplicateLocation(chain, lat, lon)) return;
+      totalMatched++;
+      if(stores.some(s=> s.osmId === osmId)){ alreadyKnown++; return; }
+      if(isDuplicateLocation(chain, lat, lon)){ alreadyKnown++; return; }
       const line1 = [tags['addr:housenumber'], tags['addr:street']].filter(Boolean).join(' ');
       const line2 = [tags['addr:city'], tags['addr:state']].filter(Boolean).join(', ');
       const address = [line1, line2, tags['addr:postcode']].filter(Boolean).join(', ') || `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
@@ -645,9 +646,13 @@ async function searchChain(chain, groupLabel, externalSignal){
       if(CHAIN_DEFAULT_TAGS[chain]) Object.assign(s.carTags, CHAIN_DEFAULT_TAGS[chain]);
       stores.push(s); added++;
     });
-    if(rowStatus) rowStatus.textContent = added ? `${added} found` : 'none found nearby';
+    let statusText, status;
+    if(added){ statusText = `${added} found`; status = 'found'; }
+    else if(alreadyKnown){ statusText = `no new stores (${alreadyKnown} already found)`; status = 'already-known'; }
+    else { statusText = 'none found nearby'; status = 'none'; }
+    if(rowStatus) rowStatus.textContent = statusText;
     save();
-    return { chain, status: added ? 'found' : 'none', added };
+    return { chain, status, added, alreadyKnown };
   }catch(e){
     if(e.message === 'Cancelled by user'){ if(rowStatus) rowStatus.textContent = 'cancelled'; throw e; }
     console.error('Search failed for', chain, e);
@@ -729,24 +734,12 @@ document.getElementById('huntBtn').addEventListener('click', async ()=>{
   if(!center) return;
   const checked = Array.from(document.querySelectorAll('input[data-chain]:checked'));
   if(checked.length===0){ await showAlertModal('Check at least one store type first.'); return; }
-  const checkedChainNames = checked.map(cb=> cb.dataset.chain);
 
   // clear any stale route from a previous hunt so results aren't mixed up
   currentRoute = null;
   if(routeLayer) routeLayer.clearLayers();
   document.getElementById('openMapsBtn').disabled = true;
   updateGenerateBtnReadiness();
-
-  // remove auto-found stores that no longer match the current criteria — but only if
-  // the user hasn't personalized them (no notes/photos/favorite/hunted/restock/avoid),
-  // so re-hunting can never silently delete anything you've actually touched
-  const isUntouched = s => !s.favorite && !s.avoid && !s.lastChecked && !s.restockDay && !s.notes && (!s.photos || s.photos.length===0);
-  stores = stores.filter(s=>{
-    if(!s.auto || !s.chain) return true;
-    if(checkedChainNames.includes(s.chain)) return true;
-    return !isUntouched(s);
-  });
-  if(selectedStoreId && !stores.some(s=> s.id===selectedStoreId)) selectedStoreId = null;
 
   const btn = document.getElementById('huntBtn');
   const original = btn.textContent;
@@ -782,6 +775,7 @@ document.getElementById('huntBtn').addEventListener('click', async ()=>{
   if(!cancelled && results.length){
     const lines = results.map(r=>{
       if(r.status==='found') return `✅ ${esc(r.chain)} — ${r.added} found`;
+      if(r.status==='already-known') return `🔁 ${esc(r.chain)} — no new stores (${r.alreadyKnown} already in your list)`;
       if(r.status==='none') return `⚪ ${esc(r.chain)} — none nearby`;
       if(r.status==='failed') return `⚠️ ${esc(r.chain)} — search failed, try a smaller radius`;
       return `⚪ ${esc(r.chain)} — skipped`;
@@ -1437,13 +1431,14 @@ function renderStoreDetail(){
     }
     store.favorite=!store.favorite; save();
   });
-  q('[data-role=avoid]').addEventListener('click', ()=>{ store.avoid=!store.avoid; save(); });
+  q('[data-role=avoid]').addEventListener('click', ()=>{ store.avoid=!store.avoid; save(); onStartEndUserChanged(); });
   q('[data-role=editBtn]').addEventListener('click', ()=>{ editingId = store.id; render(); });
   q('[data-role=remove]').addEventListener('click', async ()=>{
     if(await showConfirmModal(`Remove ${store.name} from your list? This deletes its notes and photos too.`)){
       stores = stores.filter(s=> s.id!==store.id);
       selectedStoreId = null;
       save();
+      onStartEndUserChanged();
     }
   });
   function wirePhotoInput(inputEl){
