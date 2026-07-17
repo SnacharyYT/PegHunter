@@ -2,25 +2,40 @@
 
 A mobile-first store tracker and route planner for Hot Wheels (and Matchbox / diecast) hunting. Hosted on GitHub Pages — no accounts, no paid APIs, no backend.
 
-## This round: three real bugs found and fixed
+## The big one: search reliability
 
-**"None found" / "search failed" on multi-chain hunts — actual cause found.** When a chain's search came back with results that were *all* stores you'd already found in an earlier hunt, the code reported "none found nearby" — which reads exactly like a failure, even though the search worked correctly. Now it distinguishes three outcomes and says so plainly: `✅ 3 found`, `🔁 no new stores (2 already in your list)`, or `⚪ none found nearby`. Also spaced out the requests between chains a bit more (600ms → 1200ms) to reduce the chance of the free Overpass server rate-limiting a long run of searches, which could plausibly cause real (not just mislabeled) failures on multi-chain hunts.
+Single-chain hunts working while multi-chain hunts failed "a lot of times" points to the free Overpass service rate-limiting a rapid sequence of broad regex queries from the same client — not a bug in any individual request. Two changes:
 
-**Discovered stores no longer disappear when you change hunt criteria.** Removed the "smart pruning" behavior entirely — a previous-round decision to auto-remove untouched stores whose chain got unchecked. Turns out that wasn't wanted. Saved Stores is now a strictly append-only list: everything ever found stays there permanently until you explicitly hit Remove on that store's card. Re-hunting with different criteria only ever *adds*, never removes.
+- **Automatic retry.** If a chain's search fails, the app now waits 4 seconds and retries once automatically before giving up and reporting it as failed. Most rate-limit blips clear within a few seconds, so this alone should fix a good chunk of the inconsistency.
+- **More spacing between requests** (1.2s → 1.5s).
 
-**Generate Route now re-enables when you Skip or Remove a store**, not just when Start/End changes. Previously, skipping or removing a store from its card left Generate Route greyed out with no way to recompute — now either action immediately makes it clickable again.
+**Being honest about the ceiling here:** this app deliberately uses free, unauthenticated public services (Overpass, Nominatim) with no login and no paid tier, which is what keeps it free to run — but it also means there's a real, external rate limit that no amount of client-side tuning can fully eliminate if you hunt many categories back to back, especially repeatedly in a short session. The retry should absorb most of it. If a specific chain is still consistently failing after a retry, the results summary popup will say so plainly, and trying that one chain by itself (or waiting a minute before hunting again) is the practical workaround.
+
+## New this round
+
+- **7-Eleven** added under a new "Convenience / Gas" group in Hunt Setup.
+- **Admin PIN unlock for testing.** Tap the logo in the header, enter `2014`, and every Pro-gated limit (Hot List cap, saved hunts cap, favorites cap) unlocks for testing — no payment, no real account needed. Tap the logo again with the same PIN to lock it back to free-tier behavior. This persists across reloads (stored locally) until you lock it again.
+- **Pro feature: Import 2026 Treasure Hunts.** New button in Hot List (visible to everyone, but requires Pro/admin-unlock to actually use) that adds a curated list of confirmed 2026 Super Treasure Hunts as Hot List entries.
+
+### About the 2026 import — please read before relying on it
+This is a **hand-typed, one-time snapshot** of 7 confirmed 2026 Super Treasure Hunts, cross-checked against public collector-tracking sites (hwtreasure.com, 164custom.com) as of when this was built. It is **not**:
+- An official Mattel list
+- Live or auto-updating — new cases get confirmed by collectors throughout the year, and this snapshot won't reflect them until someone manually updates the code
+- Complete with photos — I deliberately did not scrape product photos from third-party sites into the app. Car *names* aren't meaningfully copyrightable the way product photography is, but the images on collector sites are, and there's no reliable, permitted way to pull them in client-side anyway (no API, and cross-origin image fetching from arbitrary sites is usually blocked by the browser regardless). Imported cars use the same logo placeholder as any other Hot List entry — tap to add your own photo once you find one.
+
+If you want this to be more current, the list lives in the code as `TH_2026_LIST` — it's a plain array you (or I, in a future round) can update by hand as more cases are confirmed.
 
 ## Free services used (no API keys, no billing)
 - **Store discovery & geocoding:** OpenStreetMap's Overpass API and Nominatim, matching both `name` and `brand` tags.
 - **Map tiles:** Leaflet.js + OpenStreetMap (day, default) / CARTO Dark Matter (night).
 - **Route preview line:** the public OSRM demo routing server (falls back to a straight dashed line if unreachable).
 - **Turn-by-turn navigation:** Google's free, keyless Maps Directions URL scheme.
-- Each Overpass request has a 28-second timeout with automatic mirror fallback, requests are now spaced 1.2s apart, and a results summary shows exactly what happened per chain after every hunt.
+- Each Overpass request has a 28-second timeout, automatic mirror fallback, one automatic retry on failure, and a results summary after every hunt.
 
 ## Reasonable next steps (not built yet)
-- Actual Pro tier implementation (accounts, payment, real gating — today the free-tier caps are enforced but nothing is behind a real login).
+- A real backend for Pro (accounts, payment, actual gating instead of the PIN test-switch).
 - Cross-device sync (Export/Import in the ☰ menu covers manual transfer for now).
 - True offline support — the manifest is a step toward a full PWA, but there's no service worker yet.
-- hwtreasure.com integration for auto-loading TH/STH lists.
+- A maintained/refreshed TH/STH list, or a real data source for it if one becomes available.
 
 Happy hunting!

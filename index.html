@@ -30,7 +30,7 @@
   .checker-stripe{height:6px; background-image:repeating-linear-gradient(90deg, #000 0 10px, #f2f0ec 10px 20px); opacity:0.9;}
 
   header{display:grid; grid-template-columns:auto 1fr auto; align-items:center; padding:28px 18px; background:var(--bg-panel);}
-  .header-logo{height:76px; width:auto;}
+  .header-logo{height:76px; width:auto; cursor:pointer;}
   .header-banner{max-height:76px; width:100%; height:auto; object-fit:contain; min-width:0; padding:0 10px; box-sizing:border-box;}
   @media (max-width:380px){ .header-logo{height:58px;} .header-banner{max-height:58px;} }
   .hamburger-btn{background:none; border:1px solid #34343a; color:var(--ink); border-radius:8px; font-size:1.4rem; padding:10px 14px; cursor:pointer; line-height:1;}
@@ -218,7 +218,7 @@
 <body>
 
 <header>
-  <img src="THT_No_Background.png" alt="Treasure Hunt Tracker" class="header-logo" onerror="this.style.display='none'; console.error('Header logo failed to load — check that THT_No_Background.png is committed at the site root and the filename matches exactly.');">
+  <img src="THT_No_Background.png" alt="Treasure Hunt Tracker" class="header-logo" id="headerLogoBtn" onerror="this.style.display='none'; console.error('Header logo failed to load — check that THT_No_Background.png is committed at the site root and the filename matches exactly.');">
   <img src="THT_Banner.png" alt="Treasure Hunt Tracker" class="header-banner" onerror="this.style.display='none';">
   <button class="hamburger-btn" id="menuBtn">☰</button>
 </header>
@@ -387,6 +387,7 @@
       <input type="text" id="newTargetName" placeholder="e.g. '67 Camaro — Super Treasure Hunt">
       <button class="btn-tiny" id="addTargetBtn">+ Add</button>
     </div>
+    <button class="btn secondary" id="import2026Btn" style="width:100%;margin-bottom:14px;">⭐ Import 2026 Treasure Hunts (Pro)</button>
     <div id="targetList"></div>
   </section>
 </main>
@@ -430,6 +431,7 @@ const PRESET_GROUPS = [
   { id:'dollar', label:'Dollar Stores', chains:['Dollar Tree','Dollar General','Family Dollar'] },
   { id:'drug', label:'Drug Stores', chains:['CVS','Walgreens'] },
   { id:'auto', label:'Auto Parts', chains:["O'Reilly Auto Parts",'AutoZone','Advance Auto Parts'] },
+  { id:'convenience', label:'Convenience / Gas', chains:['7-Eleven'] },
 ];
 const DEFAULT_CAR_TYPES = ['Silver Series','Premium','Mainline','Matchbox'];
 const STREET_SUFFIXES = ['Drive','Dr','Street','St','Road','Rd','Avenue','Ave','Boulevard','Blvd','Lane','Ln','Parkway','Pkwy','Highway','Hwy','Way','Court','Ct','Circle','Cir','Trail','Trl','Place','Pl','Loop'];
@@ -445,6 +447,7 @@ const CHAIN_DEFAULT_TAGS = {
   "O'Reilly Auto Parts": { 'Mainline':true, 'Silver Series':false, 'Premium':true, 'Matchbox':false },
   'AutoZone': { 'Mainline':true, 'Silver Series':false, 'Premium':true, 'Matchbox':false },
   'Advance Auto Parts': { 'Mainline':true, 'Silver Series':false, 'Premium':true, 'Matchbox':false },
+  '7-Eleven': { 'Mainline':true, 'Silver Series':false, 'Premium':false, 'Matchbox':false },
 };
 
 let stores = JSON.parse(storage.get('ph_stores') || '[]');
@@ -591,7 +594,7 @@ async function overpassFetch(query, externalSignal){
   for(const endpoint of OVERPASS_ENDPOINTS){
     if(externalSignal && externalSignal.aborted) throw new Error('Cancelled by user');
     try{
-      await throttle('overpass', 1200);
+      await throttle('overpass', 1500);
       const timeoutController = new AbortController();
       const timeoutId = setTimeout(()=> timeoutController.abort(), 28000);
       const onExternalAbort = ()=> timeoutController.abort();
@@ -755,9 +758,19 @@ document.getElementById('huntBtn').addEventListener('click', async ()=>{
     for(let i=0;i<checked.length;i++){
       if(huntAbortController.signal.aborted){ cancelled = true; break; }
       const chainName = checked[i].dataset.chain;
+      const groupLabel = checked[i].dataset.groupLabel;
       btn.textContent = `Hunting… ${i+1}/${checked.length}`;
       spinnerText.innerHTML = `Hunting<br>${esc(chainName)}<br>${i+1}/${checked.length}`;
-      const result = await searchChain(chainName, checked[i].dataset.groupLabel, huntAbortController.signal);
+      let result = await searchChain(chainName, groupLabel, huntAbortController.signal);
+      // a failed search is often just a transient rate-limit from the free search service
+      // when running several chains back to back — wait a bit and retry once automatically
+      if(result && result.status === 'failed' && !huntAbortController.signal.aborted){
+        spinnerText.innerHTML = `Hunting<br>${esc(chainName)}<br>retrying…`;
+        await new Promise(r=> setTimeout(r, 4000));
+        if(!huntAbortController.signal.aborted){
+          result = await searchChain(chainName, groupLabel, huntAbortController.signal);
+        }
+      }
       if(result) results.push(result);
     }
   }catch(e){
@@ -892,8 +905,21 @@ document.getElementById('menuCloseBtn').addEventListener('click', closeMenu);
 document.getElementById('menuOverlay').addEventListener('click', closeMenu);
 
 /* ---------- Pro tier gating (announcement only — nothing is actually locked behind login yet) ---------- */
-let isPro = false;
+let isPro = storage.get('ph_admin_pro') === '1';
 const FREE_LIMITS = { hotList: 5, savedHunts: 3, favorites: 5 };
+const ADMIN_PIN = '2014';
+document.getElementById('headerLogoBtn').addEventListener('click', async ()=>{
+  const pin = await showPromptModal(isPro ? 'Enter admin PIN to lock Pro features again:' : 'Enter admin PIN to unlock Pro features for testing:');
+  if(pin === null) return;
+  if(pin.trim() === ADMIN_PIN){
+    isPro = !isPro;
+    storage.set('ph_admin_pro', isPro ? '1' : '0');
+    showToast(isPro ? '✅ Pro unlocked for testing' : '🔒 Pro locked (back to free tier)');
+    render(); renderTargets();
+  } else {
+    await showAlertModal('Incorrect PIN.');
+  }
+});
 
 /* ---------- in-app modal system (replaces browser alert/confirm) ---------- */
 let pendingModalResolve = null;
@@ -964,7 +990,7 @@ function showProUpsell(reason){
     <ul>
       <li>Unlimited Hot List cars, saved hunts, and favorite stores</li>
       <li>Sign in to access your hunts from any device</li>
-      <li>Auto-load the current Treasure Hunt &amp; Super Treasure Hunt lists — with images — straight into your Hot List</li>
+      <li>Import the current year's Treasure Hunt &amp; Super Treasure Hunt list straight into your Hot List (names and notes — no product photos, for copyright reasons)</li>
     </ul>
     <p>Stay tuned!</p>
   `);
@@ -1490,6 +1516,39 @@ function renderSavedStoresList(){
 function makeTarget(name){
   return { id:'t'+Date.now()+Math.random().toString(36).slice(2,7), name, found:false, foundDate:'', notes:'', photos:[] };
 }
+// A partial, manually-curated snapshot of 2026 Super Treasure Hunts, cross-checked against
+// public collector tracking sites (hwtreasure.com, 164custom.com) as of mid-2026. This is NOT
+// an official Mattel list, is not live/auto-updating, and will need refreshing by hand as more
+// cases are confirmed through the year. No product photos are included — see README for why.
+const TH_2026_LIST = [
+  { name: "Drift-Ender — 2026 Super Treasure Hunt", notes: "Spectraflame red, Truckin' Along series — Case A." },
+  { name: "Ford Mustang GTD — 2026 Super Treasure Hunt", notes: "Spectraflame blue, Factory Fresh series — Case B." },
+  { name: "Ferrari F40 Competizione — 2026 Super Treasure Hunt", notes: "Spectraflame gray, Ferrari series — Case C." },
+  { name: "'64 Impala — 2026 Super Treasure Hunt", notes: "Spectraflame light blue, Layin' Low series — Case D." },
+  { name: "'87 Ford Sierra Cosworth — 2026 Super Treasure Hunt", notes: "Spectraflame pink, HW Euro series — Case E." },
+  { name: "Honda Civic Custom — 2026 Super Treasure Hunt", notes: "Spectraflame green, HW Drag Racers series — Case F." },
+  { name: "Custom Otto — 2026 Super Treasure Hunt", notes: "Spectraflame blue, Mattel series — Case G." },
+];
+document.getElementById('import2026Btn').addEventListener('click', async ()=>{
+  if(!isPro){
+    showProUpsell('Auto-loading the current Treasure Hunt & Super Treasure Hunt list is a Pro feature.');
+    return;
+  }
+  const existingNames = new Set(targets.map(t=> t.name));
+  let added = 0;
+  TH_2026_LIST.forEach(item=>{
+    if(existingNames.has(item.name)) return;
+    const t = makeTarget(item.name);
+    t.notes = item.notes;
+    targets.push(t);
+    added++;
+  });
+  storage.set('ph_targets', JSON.stringify(targets));
+  renderTargets();
+  await showAlertModal(added
+    ? `Added ${added} car${added===1?'':'s'} from the 2026 list. This is a partial, community-tracked snapshot (not an official Mattel checklist) and will grow as more cases are confirmed through the year.`
+    : 'Your Hot List already has all of these.');
+});
 let targetJustOpened = null;
 document.getElementById('addTargetBtn').addEventListener('click', async ()=>{
   const name = document.getElementById('newTargetName').value.trim();
