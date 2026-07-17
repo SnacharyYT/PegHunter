@@ -64,6 +64,7 @@
   .hunt-spinner-overlay.show{display:flex;}
   @keyframes spinWheel{ to{ transform:rotate(360deg); } }
   .hunt-spinner-wheel{width:128px; height:128px; animation:spinWheel 0.9s linear infinite;}
+  .hunt-spinner-fallback{font-size:96px; line-height:1; display:flex; align-items:center; justify-content:center;}
   .hunt-spinner-overlay span{font-family:'Anton',sans-serif; text-transform:uppercase; letter-spacing:.04em; color:var(--flame1); font-size:1.4rem; line-height:1.5; text-align:center; padding:0 10px;}
 
   .leaflet-popup-content-wrapper{background:#1b1b1e; color:var(--ink);}
@@ -155,8 +156,8 @@
   .card-body-grid{display:flex; gap:14px; margin-top:8px; align-items:flex-start;}
   .card-info-col{flex:1; min-width:0;}
   .card-photo-col{flex:1; min-width:0;}
-  .square-photo{aspect-ratio:1/1 !important; max-height:none !important; object-fit:cover;}
-  .card-photo-col .peg-photo, .photo-placeholder{width:100%; aspect-ratio:1/1; margin-bottom:0;}
+  .square-photo{aspect-ratio:2/3 !important; max-height:none !important; object-fit:cover;}
+  .card-photo-col .peg-photo, .photo-placeholder{width:100%; aspect-ratio:2/3; margin-bottom:0;}
   .photo-placeholder{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; border:2px dashed var(--line); border-radius:8px; color:var(--ink-soft); font-size:0.68rem; text-align:center; cursor:pointer; padding:4px;}
   .placeholder-logo{width:55%; height:auto; opacity:0.55; margin-bottom:2px;}
   @keyframes cardWipeIn{ from{ opacity:0; max-height:0; } to{ opacity:1; max-height:2400px; } }
@@ -184,7 +185,10 @@
   .rli-move button{background:var(--card-2); border:1px solid var(--line); color:var(--ink); border-radius:4px; width:30px; height:30px; cursor:pointer; font-size:0.9rem; flex-shrink:0;}
   .rli-move button:disabled{opacity:0.3; cursor:not-allowed;}
 
-  .target-row{background:#0f0f11; border-left:5px solid var(--line); padding:10px; border-radius:4px; margin-bottom:8px; display:flex; align-items:center; gap:10px;}
+  .target-item-wrap{margin-bottom:8px;}
+  .target-row{background:#0f0f11; border-left:5px solid var(--line); padding:10px; border-radius:4px; margin-bottom:0; display:flex; align-items:center; gap:10px;}
+  .target-detail-slot{max-height:0; opacity:0; overflow:hidden; transition:max-height .35s ease, opacity .3s ease; margin-top:0;}
+  .target-detail-slot.open{max-height:2400px; opacity:1; margin-top:8px;}
   .edit-pencil{opacity:0.55; font-size:0.85rem; flex-shrink:0;}
   .target-row.found{border-left-color:var(--green);}
   .target-row .rli-label{cursor:pointer;}
@@ -276,7 +280,7 @@
     <div id="map"></div>
     <button class="map-theme-btn" id="mapThemeBtn" title="Toggle day/night map">☀️</button>
     <div class="hunt-spinner-overlay" id="huntSpinnerOverlay">
-      <img src="wheels-icon-png-31823.png" alt="" class="hunt-spinner-wheel">
+      <img src="wheels-icon-png-31823.png" alt="" class="hunt-spinner-wheel" onerror="this.outerHTML='<div class=\'hunt-spinner-wheel hunt-spinner-fallback\'>🛞</div>';">
       <span id="huntSpinnerText">Hunting…</span>
       <button class="btn small secondary" id="cancelHuntBtn" style="margin-top:8px;">Cancel</button>
     </div>
@@ -378,7 +382,6 @@
       <button class="btn-tiny" id="addTargetBtn">+ Add</button>
     </div>
     <div id="targetList"></div>
-    <div id="targetDetail"></div>
   </section>
 </main>
 
@@ -539,7 +542,7 @@ async function throttle(key, minGap){
 /* ---------- geocoding (free, no key: OpenStreetMap Nominatim) ---------- */
 async function ensureSearchCenter(){
   const text = document.getElementById('centerInput').value.trim();
-  if(!text && !searchCenter){ alert('Enter a zip/city/address, or use "Pick on map".'); return null; }
+  if(!text && !searchCenter){ await showAlertModal('Enter a zip/city/address, or use "Pick on map".'); return null; }
   if(searchCenter && (!text || lastGeocodedCenterText === text)) return searchCenter;
   setCenterStatus('Locating…');
   try{
@@ -612,7 +615,7 @@ async function searchChain(chain, groupLabel, externalSignal){
   if(rowStatus) rowStatus.textContent = 'Searching…';
   const radiusMeters = Math.round(parseFloat(document.getElementById('radius').value) * 1609.34);
   const escaped = chain.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const query = `[out:json][timeout:20];(nwr["shop"]["name"~"${escaped}",i](around:${radiusMeters},${center.lat},${center.lon}););out center tags;`;
+  const query = `[out:json][timeout:20];(nwr["shop"]["name"~"${escaped}",i](around:${radiusMeters},${center.lat},${center.lon});nwr["shop"]["brand"~"${escaped}",i](around:${radiusMeters},${center.lat},${center.lon}););out center tags;`;
   try{
     const data = await overpassFetch(query, externalSignal);
     let added = 0;
@@ -715,7 +718,7 @@ document.getElementById('huntBtn').addEventListener('click', async ()=>{
   const center = await ensureSearchCenter();
   if(!center) return;
   const checked = Array.from(document.querySelectorAll('input[data-chain]:checked'));
-  if(checked.length===0){ alert('Check at least one store type first.'); return; }
+  if(checked.length===0){ await showAlertModal('Check at least one store type first.'); return; }
   const checkedChainNames = checked.map(cb=> cb.dataset.chain);
 
   // clear any stale route from a previous hunt so results aren't mixed up
@@ -818,7 +821,7 @@ document.getElementById('customMoreToggle').addEventListener('click', ()=>{
 document.getElementById('addCustomBtn').addEventListener('click', async ()=>{
   const name = document.getElementById('customName').value.trim();
   const addr = document.getElementById('customAddr').value.trim();
-  if(!name || !addr){ alert('Name and address are required for a custom store.'); return; }
+  if(!name || !addr){ await showAlertModal('Name and address are required for a custom store.'); return; }
   const cat = document.getElementById('customCat').value;
   const s = makeStore(name, cat, false);
   s.address = addr;
@@ -852,31 +855,86 @@ document.getElementById('menuBtn').addEventListener('click', openMenu);
 document.getElementById('menuCloseBtn').addEventListener('click', closeMenu);
 document.getElementById('menuOverlay').addEventListener('click', closeMenu);
 
-/* ---------- info modal (Go Pro announcement) ---------- */
+/* ---------- Pro tier gating (announcement only — nothing is actually locked behind login yet) ---------- */
+let isPro = false;
+const FREE_LIMITS = { hotList: 5, savedHunts: 3, favorites: 5 };
+
+/* ---------- in-app modal system (replaces browser alert/confirm) ---------- */
+let pendingModalResolve = null;
 function showInfoModal(html){
   document.getElementById('infoModalBody').innerHTML = html;
   document.getElementById('infoModalOverlay').classList.add('show');
 }
-function closeInfoModal(){ document.getElementById('infoModalOverlay').classList.remove('show'); }
-document.getElementById('infoModalClose').addEventListener('click', closeInfoModal);
-document.getElementById('infoModalOverlay').addEventListener('click', (e)=>{ if(e.target.id==='infoModalOverlay') closeInfoModal(); });
-document.getElementById('goProBtn').addEventListener('click', ()=>{
-  closeMenu();
+function closeInfoModal(){
+  document.getElementById('infoModalOverlay').classList.remove('show');
+  if(pendingModalResolve){ const r = pendingModalResolve; pendingModalResolve = null; r(); }
+}
+function showAlertModal(message){
+  return new Promise(resolve=>{
+    pendingModalResolve = ()=> resolve();
+    showInfoModal(`
+      <h2>Notice</h2>
+      <p>${esc(message)}</p>
+      <div class="card-actions">
+        <button class="btn small teal" id="modalOkBtn">OK</button>
+      </div>`);
+    document.getElementById('modalOkBtn').onclick = ()=>{ pendingModalResolve=null; closeInfoModal(); resolve(); };
+  });
+}
+function showConfirmModal(message){
+  return new Promise(resolve=>{
+    pendingModalResolve = ()=> resolve(false);
+    showInfoModal(`
+      <h2>Confirm</h2>
+      <p>${esc(message)}</p>
+      <div class="card-actions">
+        <button class="btn small teal" id="modalYesBtn">Yes</button>
+        <button class="btn small secondary" id="modalNoBtn">Cancel</button>
+      </div>`);
+    document.getElementById('modalYesBtn').onclick = ()=>{ pendingModalResolve=null; closeInfoModal(); resolve(true); };
+    document.getElementById('modalNoBtn').onclick = ()=>{ pendingModalResolve=null; closeInfoModal(); resolve(false); };
+  });
+}
+function showPromptModal(message, defaultValue){
+  return new Promise(resolve=>{
+    pendingModalResolve = ()=> resolve(null);
+    showInfoModal(`
+      <h2>Name It</h2>
+      <p>${esc(message)}</p>
+      <input type="text" id="modalPromptInput" value="${esc(defaultValue||'')}" style="width:100%;box-sizing:border-box;padding:10px;border-radius:6px;border:1px solid #34343a;background:#0f0f11;color:var(--ink);font-size:16px;margin-bottom:14px;">
+      <div class="card-actions">
+        <button class="btn small teal" id="modalPromptOk">Save</button>
+        <button class="btn small secondary" id="modalPromptCancel">Cancel</button>
+      </div>`);
+    const input = document.getElementById('modalPromptInput');
+    input.focus();
+    document.getElementById('modalPromptOk').onclick = ()=>{ const v=input.value.trim(); pendingModalResolve=null; closeInfoModal(); resolve(v||null); };
+    document.getElementById('modalPromptCancel').onclick = ()=>{ pendingModalResolve=null; closeInfoModal(); resolve(null); };
+  });
+}
+function showProUpsell(reason){
   showInfoModal(`
     <h2>⭐ Pro — Coming Soon</h2>
-    <p>Pro is on the way with:</p>
+    ${reason ? `<p>${esc(reason)}</p>` : ''}
+    <p>Pro removes these limits and adds:</p>
     <ul>
-      <li>Unlimited Hot List cars</li>
+      <li>Unlimited Hot List cars, saved hunts, and favorite stores</li>
       <li>Sign in to access your hunts from any device</li>
       <li>Auto-load the current Treasure Hunt &amp; Super Treasure Hunt lists — with images — straight into your Hot List</li>
     </ul>
     <p>Stay tuned!</p>
   `);
+}
+document.getElementById('infoModalClose').addEventListener('click', closeInfoModal);
+document.getElementById('infoModalOverlay').addEventListener('click', (e)=>{ if(e.target.id==='infoModalOverlay') closeInfoModal(); });
+document.getElementById('goProBtn').addEventListener('click', ()=>{
+  closeMenu();
+  showProUpsell('Get more out of your hunt with Pro.');
 });
 
 /* ---------- bomb: full wipe ---------- */
-document.getElementById('bombBtn').addEventListener('click', ()=>{
-  if(confirm('💣 This permanently deletes every saved store, note, photo, target, and saved hunt on this device. Are you sure?')){
+document.getElementById('bombBtn').addEventListener('click', async ()=>{
+  if(await showConfirmModal('💣 This permanently deletes every saved store, note, photo, target, and saved hunt on this device. Are you sure?')){
     stores = []; hunts = []; targets = [];
     storage.set('ph_stores', '[]'); storage.set('ph_hunts', '[]'); storage.set('ph_targets', '[]');
     document.querySelectorAll('.chain-list input[type=checkbox]').forEach(cb=>{ cb.checked=false; });
@@ -904,11 +962,11 @@ document.getElementById('exportBtn').addEventListener('click', ()=>{
 document.getElementById('importInput').addEventListener('change', (e)=>{
   const file = e.target.files[0]; if(!file) return;
   const reader = new FileReader();
-  reader.onload = ()=>{
+  reader.onload = async ()=>{
     let data;
     try{ data = JSON.parse(reader.result); }
-    catch(err){ alert('That file could not be read — make sure it is a JSON backup exported from this app.'); e.target.value=''; return; }
-    if(!confirm('Import this file? This replaces all current stores, hunts, car types, and Hot List entries on this device.')){ e.target.value=''; return; }
+    catch(err){ await showAlertModal('That file could not be read — make sure it is a JSON backup exported from this app.'); e.target.value=''; return; }
+    if(!(await showConfirmModal('Import this file? This replaces all current stores, hunts, car types, and Hot List entries on this device.'))){ e.target.value=''; return; }
     if(Array.isArray(data.stores)) stores = data.stores;
     if(Array.isArray(data.hunts)) hunts = data.hunts;
     if(Array.isArray(data.carTypes)) carTypes = data.carTypes;
@@ -919,7 +977,7 @@ document.getElementById('importInput').addEventListener('change', (e)=>{
     storage.set('ph_targets', JSON.stringify(targets));
     populateHuntSelect(); renderCarTypes(); render(); renderTargets();
     e.target.value = '';
-    alert('Import complete.');
+    await showAlertModal('Import complete.');
   };
   reader.readAsText(file);
 });
@@ -927,7 +985,7 @@ document.getElementById('importInput').addEventListener('change', (e)=>{
 /* ---------- clear board: route settings only ---------- */
 let routeVisible = true;
 document.getElementById('clearBoardBtn').addEventListener('click', async ()=>{
-  if(!currentRoute){ alert('Generate a route first.'); return; }
+  if(!currentRoute){ await showAlertModal('Generate a route first.'); return; }
   routeVisible = !routeVisible;
   const btn = document.getElementById('clearBoardBtn');
   if(routeVisible){
@@ -963,8 +1021,12 @@ function populateHuntSelect(){
   const sel = document.getElementById('huntSelect');
   sel.innerHTML = '<option value="">— saved hunts —</option>' + hunts.map(h=>`<option value="${h.id}">${esc(h.name)}</option>`).join('');
 }
-document.getElementById('saveHuntBtn').addEventListener('click', ()=>{
-  const name = prompt('Name this hunt (e.g. "Full Force Weekend" or "Quick Dollar Run"):');
+document.getElementById('saveHuntBtn').addEventListener('click', async ()=>{
+  if(!isPro && hunts.length >= FREE_LIMITS.savedHunts){
+    showProUpsell(`Free accounts are limited to ${FREE_LIMITS.savedHunts} saved hunts.`);
+    return;
+  }
+  const name = await showPromptModal('Name this hunt (e.g. "Full Force Weekend" or "Quick Dollar Run"):');
   if(!name) return;
   const checkedChains = Array.from(document.querySelectorAll('input[data-chain]:checked')).map(cb=> cb.dataset.chain);
   hunts.push({
@@ -978,12 +1040,12 @@ document.getElementById('saveHuntBtn').addEventListener('click', ()=>{
     createdAt: new Date().toISOString().slice(0,10)
   });
   saveHunts();
-  alert(`Saved "${name}". Load it later, then press HUNT! to run the searches.`);
+  await showAlertModal(`Saved "${name}". Load it later, then press HUNT! to run the searches.`);
 });
 document.getElementById('loadHuntBtn').addEventListener('click', async ()=>{
   const id = document.getElementById('huntSelect').value;
   const hunt = hunts.find(h=> h.id===id);
-  if(!hunt){ alert('Pick a saved hunt first.'); return; }
+  if(!hunt){ await showAlertModal('Pick a saved hunt first.'); return; }
   document.getElementById('centerInput').value = hunt.centerText || '';
   document.getElementById('radius').value = hunt.radius || 10;
   document.getElementById('radiusVal').textContent = (hunt.radius||10) + ' mi';
@@ -999,12 +1061,12 @@ document.getElementById('loadHuntBtn').addEventListener('click', async ()=>{
   render();
   closeMenu();
   setTab('setup');
-  alert('Hunt loaded — press the HUNT! button to run the searches.');
+  await showAlertModal('Hunt loaded — press the HUNT! button to run the searches.');
 });
-document.getElementById('deleteHuntBtn').addEventListener('click', ()=>{
+document.getElementById('deleteHuntBtn').addEventListener('click', async ()=>{
   const id = document.getElementById('huntSelect').value;
   if(!id) return;
-  if(confirm('Delete this saved hunt?')){ hunts = hunts.filter(h=> h.id!==id); saveHunts(); }
+  if(await showConfirmModal('Delete this saved hunt?')){ hunts = hunts.filter(h=> h.id!==id); saveHunts(); }
 });
 
 /* ---------- tabs ---------- */
@@ -1053,7 +1115,7 @@ function setMapTheme(dark){
 }
 function initMap(){
   map = L.map('map', { scrollWheelZoom:false }).setView([39.8283,-98.5795], 4);
-  setMapTheme(true);
+  setMapTheme(false);
   markersLayer = L.layerGroup().addTo(map);
   routeLayer = L.layerGroup().addTo(map);
   highlightLayer = L.layerGroup().addTo(map);
@@ -1310,11 +1372,17 @@ function renderStoreDetail(){
     store.lastChecked = store.lastChecked ? '' : new Date().toISOString().slice(0,10);
     save();
   });
-  q('[data-role=favorite]').addEventListener('click', ()=>{ store.favorite=!store.favorite; save(); });
+  q('[data-role=favorite]').addEventListener('click', async ()=>{
+    if(!store.favorite && !isPro && stores.filter(s=>s.favorite).length >= FREE_LIMITS.favorites){
+      showProUpsell(`Free accounts are limited to ${FREE_LIMITS.favorites} favorite stores.`);
+      return;
+    }
+    store.favorite=!store.favorite; save();
+  });
   q('[data-role=avoid]').addEventListener('click', ()=>{ store.avoid=!store.avoid; save(); });
   q('[data-role=editBtn]').addEventListener('click', ()=>{ editingId = store.id; render(); });
-  q('[data-role=remove]').addEventListener('click', ()=>{
-    if(confirm(`Remove ${store.name} from your list? This deletes its notes and photos too.`)){
+  q('[data-role=remove]').addEventListener('click', async ()=>{
+    if(await showConfirmModal(`Remove ${store.name} from your list? This deletes its notes and photos too.`)){
       stores = stores.filter(s=> s.id!==store.id);
       selectedStoreId = null;
       save();
@@ -1369,20 +1437,44 @@ function renderSavedStoresList(){
 function makeTarget(name){
   return { id:'t'+Date.now()+Math.random().toString(36).slice(2,7), name, found:false, foundDate:'', notes:'', photos:[] };
 }
-document.getElementById('addTargetBtn').addEventListener('click', ()=>{
+let targetJustOpened = null;
+document.getElementById('addTargetBtn').addEventListener('click', async ()=>{
   const name = document.getElementById('newTargetName').value.trim();
   if(!name) return;
+  if(!isPro && targets.length >= FREE_LIMITS.hotList){
+    showProUpsell(`Free accounts are limited to ${FREE_LIMITS.hotList} Hot List cars.`);
+    return;
+  }
   const t = makeTarget(name);
   targets.push(t);
+  storage.set('ph_targets', JSON.stringify(targets));
   document.getElementById('newTargetName').value='';
-  selectedTargetId = t.id;
-  saveTargets();
+  openTargetAnimated(t.id);
 });
+function openTargetAnimated(id){
+  selectedTargetId = id;
+  editingTargetId = null;
+  targetJustOpened = id;
+  renderTargets();
+}
+function closeTargetSlot(id){
+  const slot = document.getElementById('targetSlot-' + id);
+  if(slot) slot.classList.remove('open');
+  setTimeout(()=>{
+    selectedTargetId = null;
+    editingTargetId = null;
+    renderTargets();
+    window.scrollTo({ top:0, behavior:'smooth' });
+  }, 320);
+}
 function renderTargets(){
   const el = document.getElementById('targetList');
   el.innerHTML = '';
-  if(!targets.length){ el.innerHTML = '<p style="font-size:0.8rem;color:var(--ink-soft);">Nothing on your list yet — add a car above.</p>'; }
+  if(!targets.length){ el.innerHTML = '<p style="font-size:0.8rem;color:var(--ink-soft);">Nothing on your list yet — add a car above.</p>'; return; }
   targets.forEach(t=>{
+    const itemWrap = document.createElement('div');
+    itemWrap.className = 'target-item-wrap';
+
     const row = document.createElement('div');
     row.className = 'target-row' + (t.found ? ' found' : '');
     row.innerHTML = `<input type="checkbox" data-role="found" ${t.found?'checked':''}><span class="rli-label">${esc(t.name)}</span>`;
@@ -1391,18 +1483,33 @@ function renderTargets(){
       t.foundDate = t.found ? new Date().toISOString().slice(0,10) : '';
       saveTargets();
     });
-    row.querySelector('.rli-label').addEventListener('click', ()=>{ selectedTargetId = t.id; renderTargetDetail(); });
-    el.appendChild(row);
+    row.querySelector('.rli-label').addEventListener('click', ()=>{
+      if(selectedTargetId === t.id) closeTargetSlot(t.id);
+      else openTargetAnimated(t.id);
+    });
+    itemWrap.appendChild(row);
+
+    const slot = document.createElement('div');
+    const animatingThis = (targetJustOpened === t.id);
+    slot.className = 'target-detail-slot' + (selectedTargetId===t.id && !animatingThis ? ' open' : '');
+    slot.id = 'targetSlot-' + t.id;
+    if(selectedTargetId === t.id) slot.appendChild(buildTargetCard(t));
+    itemWrap.appendChild(slot);
+
+    el.appendChild(itemWrap);
   });
-  renderTargetDetail();
+  if(targetJustOpened){
+    const idToAnimate = targetJustOpened;
+    targetJustOpened = null;
+    requestAnimationFrame(()=>{
+      const slot = document.getElementById('targetSlot-' + idToAnimate);
+      if(slot){ slot.offsetHeight; requestAnimationFrame(()=> slot.classList.add('open')); }
+    });
+  }
 }
-function renderTargetDetail(){
-  const wrap = document.getElementById('targetDetail');
-  wrap.innerHTML = '';
-  const t = targets.find(x=> x.id===selectedTargetId);
-  if(!t) return;
+function buildTargetCard(t){
   const card = document.createElement('div');
-  card.className = 'store-card wipe-in';
+  card.className = 'store-card';
   card.style.borderLeftColor = t.found ? 'var(--green)' : 'var(--line)';
   const q = sel => card.querySelector(sel);
 
@@ -1415,16 +1522,15 @@ function renderTargetDetail(){
         <button class="btn small teal" data-role="saveEdit">💾 Save &amp; Close</button>
         <button class="btn small secondary" data-role="cancelEdit">Cancel</button>
       </div>`;
-    wrap.appendChild(card);
-    q('[data-role=closeX]').addEventListener('click', ()=> animateCardClose('targetDetail', ()=>{ selectedTargetId=null; editingTargetId=null; renderTargets(); }));
+    q('[data-role=closeX]').addEventListener('click', ()=> closeTargetSlot(t.id));
     q('[data-role=saveEdit]').addEventListener('click', ()=>{
       t.name = document.getElementById('editTargetName').value.trim() || t.name;
       t.notes = document.getElementById('editTargetNotes').value;
       editingTargetId = null;
       saveTargets();
     });
-    q('[data-role=cancelEdit]').addEventListener('click', ()=>{ editingTargetId=null; renderTargetDetail(); });
-    return;
+    q('[data-role=cancelEdit]').addEventListener('click', ()=>{ editingTargetId=null; renderTargets(); });
+    return card;
   }
 
   const lastPhoto = t.photos && t.photos.length ? t.photos[t.photos.length-1] : null;
@@ -1446,11 +1552,10 @@ function renderTargetDetail(){
       <button class="btn small secondary" data-role="editBtn">✏️ Edit</button>
       <button class="btn small secondary" data-role="remove">Remove</button>
     </div>`;
-  wrap.appendChild(card);
-  q('[data-role=closeX]').addEventListener('click', ()=> animateCardClose('targetDetail', ()=>{ selectedTargetId=null; renderTargetDetail(); }));
-  q('[data-role=editBtn]').addEventListener('click', ()=>{ editingTargetId = t.id; renderTargetDetail(); });
-  q('[data-role=remove]').addEventListener('click', ()=>{
-    if(confirm(`Remove "${t.name}" from your Hot List?`)){
+  q('[data-role=closeX]').addEventListener('click', ()=> closeTargetSlot(t.id));
+  q('[data-role=editBtn]').addEventListener('click', ()=>{ editingTargetId = t.id; renderTargets(); });
+  q('[data-role=remove]').addEventListener('click', async ()=>{
+    if(await showConfirmModal(`Remove "${t.name}" from your Hot List?`)){
       targets = targets.filter(x=> x.id!==t.id);
       selectedTargetId = null;
       saveTargets();
@@ -1460,7 +1565,7 @@ function renderTargetDetail(){
     inputEl.addEventListener('change', e=>{
       const file=e.target.files[0]; if(!file) return;
       const reader=new FileReader();
-      reader.onload=()=>{ t.photos.push({ date:new Date().toISOString().slice(0,10), dataUrl:reader.result }); saveTargets(); renderTargetDetail(); };
+      reader.onload=()=>{ t.photos.push({ date:new Date().toISOString().slice(0,10), dataUrl:reader.result }); saveTargets(); };
       reader.readAsDataURL(file);
     });
   }
@@ -1470,6 +1575,7 @@ function renderTargetDetail(){
   if(photoInput2) wirePhotoInput(photoInput2);
   const thumb = q('[data-role=photoThumb]');
   if(thumb) thumb.addEventListener('click', ()=> openLightbox(null, t.photos.length-1, t));
+  return card;
 }
 
 /* ---------- photo lightbox (shared by stores and targets) ---------- */
@@ -1509,15 +1615,15 @@ function orderStops(start, stops){
 async function resolvePoint(selectVal, customInputId){
   if(selectVal==='current'){
     return new Promise(resolve=>{
-      if(!navigator.geolocation){ alert('Geolocation is not available in this browser.'); resolve(null); return; }
+      if(!navigator.geolocation){ showAlertModal('Geolocation is not available in this browser.'); resolve(null); return; }
       navigator.geolocation.getCurrentPosition(
         pos=> resolve({ lat:pos.coords.latitude, lon:pos.coords.longitude, address:`${pos.coords.latitude.toFixed(5)},${pos.coords.longitude.toFixed(5)}` }),
-        err=> { alert('Could not get current location: ' + err.message); resolve(null); }
+        err=> { showAlertModal('Could not get current location: ' + err.message); resolve(null); }
       );
     });
   }
   if(selectVal==='home'){
-    if(!homeCoord){ alert('Enter a home address in Hunt Setup first.'); return null; }
+    if(!homeCoord){ await showAlertModal('Enter a home address in Route Details first.'); return null; }
     return { lat:homeCoord.lat, lon:homeCoord.lon, address:homeCoord.address };
   }
   if(selectVal==='custom'){
@@ -1550,9 +1656,9 @@ document.getElementById('generateRouteBtn').addEventListener('click', async ()=>
   const startVal = document.getElementById('startSelect').value;
   const endVal = document.getElementById('endSelect').value;
   const start = await resolvePoint(startVal, 'startAddrInput');
-  if(!start || !start.address){ alert('Pick or enter a valid start point.'); return; }
+  if(!start || !start.address){ await showAlertModal('Pick or enter a valid start point.'); return; }
   const end = endVal==='loop' ? start : await resolvePoint(endVal, 'endAddrInput');
-  if(!end || !end.address){ alert('Pick or enter a valid end point.'); return; }
+  if(!end || !end.address){ await showAlertModal('Pick or enter a valid end point.'); return; }
 
   let stops = stores.filter(s=> !s.avoid && s.address && passesFilter(s));
   if(start.id) stops = stops.filter(s=> s.id!==start.id);
@@ -1562,13 +1668,13 @@ document.getElementById('generateRouteBtn').addEventListener('click', async ()=>
 
 document.getElementById('routeFromSavedBtn').addEventListener('click', async ()=>{
   const checkedIds = Array.from(document.querySelectorAll('#savedStoresList [data-saved-store]:checked')).map(cb=> cb.dataset.savedStore);
-  if(checkedIds.length===0){ alert('Check at least one saved store first.'); return; }
+  if(checkedIds.length===0){ await showAlertModal('Check at least one saved store first.'); return; }
   const startVal = document.getElementById('startSelect').value;
   const endVal = document.getElementById('endSelect').value;
   const start = await resolvePoint(startVal, 'startAddrInput');
-  if(!start || !start.address){ alert('Set a valid Start point in Route Details first.'); return; }
+  if(!start || !start.address){ await showAlertModal('Set a valid Start point in Route Details first.'); return; }
   const end = endVal==='loop' ? start : await resolvePoint(endVal, 'endAddrInput');
-  if(!end || !end.address){ alert('Set a valid End point in Route Details first.'); return; }
+  if(!end || !end.address){ await showAlertModal('Set a valid End point in Route Details first.'); return; }
 
   let stops = stores.filter(s=> checkedIds.includes(s.id) && s.address);
   if(start.id) stops = stops.filter(s=> s.id!==start.id);
@@ -1577,11 +1683,11 @@ document.getElementById('routeFromSavedBtn').addEventListener('click', async ()=
   openTabForce('route');
 });
 
-document.getElementById('openMapsBtn').addEventListener('click', ()=>{
-  if(!currentRoute){ alert('Generate a route first.'); return; }
+document.getElementById('openMapsBtn').addEventListener('click', async ()=>{
+  if(!currentRoute){ await showAlertModal('Generate a route first.'); return; }
   const { start, ordered, end } = currentRoute;
   if(ordered.length > 9){
-    if(!confirm(`This route has ${ordered.length} stops — Google Maps may truncate very long routes. Continue anyway?`)) return;
+    if(!(await showConfirmModal(`This route has ${ordered.length} stops — Google Maps may truncate very long routes. Continue anyway?`))) return;
   }
   const origin = encodeURIComponent(start.address);
   const destination = encodeURIComponent(end.address);

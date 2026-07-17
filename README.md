@@ -2,51 +2,45 @@
 
 A mobile-first store tracker and route planner for Hot Wheels (and Matchbox / diecast) hunting. Hosted on GitHub Pages — no accounts, no paid APIs, no backend.
 
-## New/changed files this round
-- `THT_No_Background.png` — updated logo, resized from the original 1024×1024 upload down to 320×320 and compressed (170KB, down from ~1.3MB). It's only ever displayed at ~76px tall, so the original resolution was far more than needed.
-- `THT_Banner.png` — new banner image, replaces the text title in the header. Resized to 800px wide (198KB, down from ~1.3MB) for the same reason.
-- `icon-192.png`, `icon-512.png`, `apple-touch-icon.png` — regenerated from the updated logo.
+## This round's changes
 
-If you swap either image again, keep the same filenames, and consider resizing before uploading (roughly 300–800px on the long edge is plenty for how these are actually displayed — full-resolution exports just slow down every page load for no visible benefit).
+**All popups are now in-app.** Every `alert()`/`confirm()`/`prompt()` (browser-native dialogs) has been replaced with a themed in-app modal — notices, confirmations, and the "name this hunt" prompt all now match the app's look instead of looking like a browser system dialog.
+
+**Free-tier limits + Pro upsell.** Non-Pro accounts are capped at 5 Hot List cars, 3 saved hunts, and 5 favorite stores. Hitting a cap shows the Pro modal instead of silently failing. There's no real Pro tier yet — `isPro` is hardcoded `false` — this is groundwork/announcement only. When you're ready to build real Pro gating (accounts, payments), search for `isPro` and `FREE_LIMITS` in the script.
+
+**Hot List now rolls out from the row you tapped**, not from a shared area at the bottom — tap a car and its card unfurls right underneath it; tap the ✕ and it rolls back up, then the page scrolls to the top.
+
+**Photos are now 2:3 (portrait)** instead of square, on both store cards and Hot List cards — closer to an actual Hot Wheels blister card's proportions.
+
+**Map defaults to day mode** on load — night mode was hard to read at a glance; the toggle is still there if you prefer it.
+
+**Broader store search:** each hunt now also matches OpenStreetMap's `brand` tag, not just `name` — some real-world locations are tagged with a brand instead of (or in addition to) a name, so this should catch stores that were being missed. If you're still seeing a real, nearby location get missed after this, it likely just isn't mapped in OpenStreetMap yet — that's a data-completeness limit outside the app's control, not a bug in the search itself.
+
+**Home address moved to Route Details** (was in Hunt Setup), since it's only used there.
 
 ## Layout
-1. Header: logo left, **banner image** (was text) filling the space between logo and hamburger, hamburger sized to fit its own icon.
-2. **Hunt Setup / Route Details / Saved Stores / Hot List** — now four tabs in a 2×2 grid just below the header. Tapping one smoothly scrolls you to it as it slides open; tapping again scrolls back up as it closes. Opening any tab also closes an open store card first.
-3. Location box, map (day/night toggle, spinning-wheel overlay with a live "Hunting / [store type] / x of y" progress readout and a Cancel button).
-4. The selected store's card appears under the map — it now animates open and closed (a quick wipe), and closing one scrolls you back to the top of the page.
+1. Header: logo, **banner image** (replaces the old text title), hamburger.
+2. **Hunt Setup / Route Details / Saved Stores / Hot List** — four tabs in a 2×2 grid below the header, each opening as a smooth slide-down panel.
+3. Location box, map (day/night toggle — defaults to day — plus a spinning-wheel overlay with a live "Hunting / [store type] / x of y" readout and a Cancel button).
+4. The selected store's card appears under the map, animating open/closed, scrolling to the top when closed.
 
-## Hunt Setup
-- Home address moved out to Route Details, since it's only relevant there.
-- A short note under the HUNT! button explains what it does: finds all the stores in your area matching the criteria below it.
-
-## Route Details
-- **Home address now lives here**, above Start/End, since that's where it's actually used.
-
-## 📦 Saved Stores (new tab)
-Every store you've ever found, across every hunt, in one running list — independent of any single hunt. Check the ones you want and tap **Route from Saved Stores** to build a route from just those (Start/End still come from Route Details, so set those first). It jumps you straight to Route Details showing the result.
-
-## Hot List
-- Adding a car now opens its detail card immediately, laid out like a store card (notes on the left, photo on the right).
-- Dropped the inline pencil icon — the row itself makes it clear it's tappable.
-- No photo yet? The card shows the Treasure Hunt Tracker logo as a placeholder instead of a plain camera icon, still tappable to add a real photo.
+## 📦 Saved Stores
+Every store you've ever found, across every hunt, in one running list. Check the ones you want and tap **Route from Saved Stores** to build a route from just those (Start/End come from Route Details, so set those first).
 
 ## ⭐ Go Pro (hamburger menu)
-New button at the top of the menu. For now it just shows a "coming soon" summary of planned Pro features: unlimited Hot List entries, cross-device sign-in, and one-tap import of the current Treasure Hunt / Super Treasure Hunt lists (with images) from hwtreasure.com. Nothing is actually gated yet — this is just the announcement.
-
-## Cleaned-up messaging
-Per your note, removed anything that explained *how* the app works internally (timeouts, retry counts, etc.) from user-facing text — that's dev-only detail now, kept solely in this README and in code comments. The footer now also explains that moving data to another device means exporting here and importing there (☰ menu → Data), since there's no server sync.
+Shows a "coming soon" summary: unlimited Hot List/saved hunts/favorites, cross-device sign-in, and one-tap import of the current Treasure Hunt / Super Treasure Hunt lists (with images) from hwtreasure.com. Nothing is gated behind a real account yet.
 
 ## Free services used (no API keys, no billing)
-- **Store discovery & geocoding:** OpenStreetMap's Overpass API and Nominatim.
-- **Map tiles:** Leaflet.js + OpenStreetMap (day) / CARTO Dark Matter (night).
+- **Store discovery & geocoding:** OpenStreetMap's Overpass API and Nominatim (now matching on both `name` and `brand` tags).
+- **Map tiles:** Leaflet.js + OpenStreetMap (day, default) / CARTO Dark Matter (night).
 - **Route preview line:** the public OSRM demo routing server (falls back to a straight dashed line if unreachable).
 - **Turn-by-turn navigation:** Google's free, keyless Maps Directions URL scheme.
-- Each Overpass request has a 15-second timeout with automatic mirror fallback, plus a Cancel button on the hunting spinner if something's still slow.
+- Each Overpass request has a 15-second timeout with automatic mirror fallback, plus a Cancel button on the hunting spinner.
 
 ## Reasonable next steps (not built yet)
-- Actual Pro tier implementation (today it's an announcement only).
-- Cross-device sync (Export/Import covers manual transfer for now).
+- Actual Pro tier implementation (accounts, payment, real gating — today it's a UI announcement plus soft caps only).
+- Cross-device sync (Export/Import in the ☰ menu covers manual transfer for now).
 - True offline support — the manifest is a step toward a full PWA, but there's no service worker yet.
-- Smarter route optimization for larger stop counts.
+- hwtreasure.com integration for auto-loading TH/STH lists.
 
 Happy hunting!
