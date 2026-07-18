@@ -2,28 +2,34 @@
 
 A mobile-first store tracker and route planner for Hot Wheels (and Matchbox / diecast) hunting. Hosted on GitHub Pages — no accounts, no paid APIs, no backend.
 
-## The big one: search reliability
+## On pulling images from Mattel's own website
+Asked and answered honestly: **switching the image source to Mattel's own site wouldn't actually solve the copyright concern**, so I didn't implement it. Copyright ownership is about who *created* the photo, not which website happens to display it — Mattel's product photography is exactly as copyrighted on hotwheels.com as it is on a collector site. There's also a practical wall regardless of copyright: most websites (including Mattel's) don't allow arbitrary cross-origin JavaScript to fetch their images or HTML, so a client-side app like this one can't reliably scrape either source even if it wanted to.
 
-Single-chain hunts working while multi-chain hunts failed "a lot of times" points to the free Overpass service rate-limiting a rapid sequence of broad regex queries from the same client — not a bug in any individual request. Two changes:
+What I did instead: the "Import 2026 Treasure Hunts" Pro feature (added last round) uses real, search-verified car *names* only — names aren't meaningfully copyrightable the way product photography is — paired with the app's own logo as a placeholder image. You can always tap that placeholder to add your own photo once you find the car. If a legitimate licensed image API ever exists for this, it'd be a clean drop-in replacement; scraping isn't the path there.
 
-- **Automatic retry.** If a chain's search fails, the app now waits 4 seconds and retries once automatically before giving up and reporting it as failed. Most rate-limit blips clear within a few seconds, so this alone should fix a good chunk of the inconsistency.
-- **More spacing between requests** (1.2s → 1.5s).
+## This round's changes
 
-**Being honest about the ceiling here:** this app deliberately uses free, unauthenticated public services (Overpass, Nominatim) with no login and no paid tier, which is what keeps it free to run — but it also means there's a real, external rate limit that no amount of client-side tuning can fully eliminate if you hunt many categories back to back, especially repeatedly in a short session. The retry should absorb most of it. If a specific chain is still consistently failing after a retry, the results summary popup will say so plainly, and trying that one chain by itself (or waiting a minute before hunting again) is the practical workaround.
+**Store cards & Hot List — real photo management, not just "add more":**
+- Selecting a photo now shows a preview with explicit **💾 Save** / **✕ Cancel** buttons — nothing is written until you tap Save.
+- Added **🔄 Replace** and **🗑 Remove** (with confirmation) for the current photo.
 
-## New this round
+**Saved Stores reworked:**
+- Action buttons (⭐ Favorites filter, 🔥 Favorite selected, 🗑 Delete selected) moved to the top of the list, above the checkboxes they act on.
+- "Route from Saved Stores" renamed to **Route from Selected**, and it now clears any currently-displayed route/hunt from the map first so old and new results can't visually mix.
+- **⭐ Favorites** button toggles a filter to show only your favorited stores in this list.
 
-- **7-Eleven** added under a new "Convenience / Gas" group in Hunt Setup.
-- **Admin PIN unlock for testing.** Tap the logo in the header, enter `2014`, and every Pro-gated limit (Hot List cap, saved hunts cap, favorites cap) unlocks for testing — no payment, no real account needed. Tap the logo again with the same PIN to lock it back to free-tier behavior. This persists across reloads (stored locally) until you lock it again.
-- **Pro feature: Import 2026 Treasure Hunts.** New button in Hot List (visible to everyone, but requires Pro/admin-unlock to actually use) that adds a curated list of confirmed 2026 Super Treasure Hunts as Hot List entries.
+**Routing:**
+- **Last-used Start/End now persists** across sessions, the same way other settings do.
+- **Save/Load/Delete Route** added to Route Details — saves your Start/End configuration (not the store list itself) under a name for reuse.
+- **Save/Load Hunt moved from the hamburger menu into Hunt Setup**, next to the settings it actually configures.
 
-### About the 2026 import — please read before relying on it
-This is a **hand-typed, one-time snapshot** of 7 confirmed 2026 Super Treasure Hunts, cross-checked against public collector-tracking sites (hwtreasure.com, 164custom.com) as of when this was built. It is **not**:
-- An official Mattel list
-- Live or auto-updating — new cases get confirmed by collectors throughout the year, and this snapshot won't reflect them until someone manually updates the code
-- Complete with photos — I deliberately did not scrape product photos from third-party sites into the app. Car *names* aren't meaningfully copyrightable the way product photography is, but the images on collector sites are, and there's no reliable, permitted way to pull them in client-side anyway (no API, and cross-origin image fetching from arbitrary sites is usually blocked by the browser regardless). Imported cars use the same logo placeholder as any other Hot List entry — tap to add your own photo once you find one.
+**Fixed: tab panels scrolling to the "middle" instead of the top.** Real bug, not cosmetic — the scroll was firing based on a `setTimeout` guess while the panel's slide-open CSS animation was still in progress, so it measured a half-expanded panel and landed short. Now it waits for the animation to actually finish (via `transitionend`, with a timeout fallback) before scrolling. Affected both Route Details and Hot List identically, so both are fixed the same way.
 
-If you want this to be more current, the list lives in the code as `TH_2026_LIST` — it's a plain array you (or I, in a future round) can update by hand as more cases are confirmed.
+**Admin PIN unlock changed from 1 tap to 5 taps** within 2 seconds — a single tap/hold on a mobile image commonly triggers the browser's own "save image" context menu, which would fight with a single-click PIN prompt. Five quick taps avoids that collision entirely.
+
+**Store list additions:** Speedway (defaults to Silver Series checked) joins 7-Eleven under "Convenience / Gas."
+
+**Small stuff:** a note under the HUNT! button warning that large searches can take a few minutes; the hamburger menu now scrolls to its own top every time it opens.
 
 ## Free services used (no API keys, no billing)
 - **Store discovery & geocoding:** OpenStreetMap's Overpass API and Nominatim, matching both `name` and `brand` tags.
@@ -36,6 +42,6 @@ If you want this to be more current, the list lives in the code as `TH_2026_LIST
 - A real backend for Pro (accounts, payment, actual gating instead of the PIN test-switch).
 - Cross-device sync (Export/Import in the ☰ menu covers manual transfer for now).
 - True offline support — the manifest is a step toward a full PWA, but there's no service worker yet.
-- A maintained/refreshed TH/STH list, or a real data source for it if one becomes available.
+- A licensed image source for the TH/STH import, if one ever becomes available — see the copyright note above for why that's the blocker, not effort.
 
 Happy hunting!
