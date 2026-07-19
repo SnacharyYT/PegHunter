@@ -2,11 +2,6 @@
 
 A mobile-first store tracker and route planner for Hot Wheels (and Matchbox / diecast) hunting. Hosted on GitHub Pages — no accounts, no paid APIs, no backend.
 
-## On pulling images from Mattel's own website
-Asked and answered honestly: **switching the image source to Mattel's own site wouldn't actually solve the copyright concern**, so I didn't implement it. Copyright ownership is about who *created* the photo, not which website happens to display it — Mattel's product photography is exactly as copyrighted on hotwheels.com as it is on a collector site. There's also a practical wall regardless of copyright: most websites (including Mattel's) don't allow arbitrary cross-origin JavaScript to fetch their images or HTML, so a client-side app like this one can't reliably scrape either source even if it wanted to.
-
-What I did instead: the "Import 2026 Treasure Hunts" Pro feature (added last round) uses real, search-verified car *names* only — names aren't meaningfully copyrightable the way product photography is — paired with the app's own logo as a placeholder image. You can always tap that placeholder to add your own photo once you find the car. If a legitimate licensed image API ever exists for this, it'd be a clean drop-in replacement; scraping isn't the path there.
-
 ## This round's changes
 
 **Store cards & Hot List — real photo management, not just "add more":**
