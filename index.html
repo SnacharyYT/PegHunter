@@ -65,7 +65,7 @@
   @keyframes spinWheel{ to{ transform:rotate(360deg); } }
   .hunt-spinner-wheel{width:128px; height:128px; animation:spinWheel 0.9s linear infinite;}
   .hunt-spinner-fallback{font-size:96px; line-height:1; display:flex; align-items:center; justify-content:center;}
-  .hunt-spinner-overlay span{font-family:'Anton',sans-serif; text-transform:uppercase; letter-spacing:.04em; color:var(--flame1); font-size:1.4rem; line-height:1.5; text-align:center; padding:0 10px;}
+  .hunt-spinner-overlay span{font-family:'Anton',sans-serif; text-transform:uppercase; letter-spacing:.04em; color:var(--flame1); font-size:1.15rem; line-height:1.6; text-align:center; padding:0 10px;}
 
   .leaflet-popup-content-wrapper{background:#1b1b1e; color:var(--ink);}
   .leaflet-popup-tip{background:#1b1b1e;}
@@ -260,7 +260,7 @@
   <h2>Version</h2>
   <p class="hint-text" style="margin-top:-4px;">🧪 <strong>ALPHA RELEASE</strong> — core features work, but expect rough edges while we build out multi-category hunting. Feedback welcome!</p>
   <button class="btn-tiny menu-full-btn" id="versionHistoryBtn" style="text-align:center;">📜 Version History</button>
-  <p class="app-version">v2.0-alpha — Jul 20, 2026</p>
+  <p class="app-version">v2.1-alpha — Jul 20, 2026</p>
 </div>
 
 <main class="stack">
@@ -524,13 +524,23 @@ const PRESET_GROUPS = [
 ];
 // Independent/local shops are searched by OSM shop type, not by brand name, so you don't
 // have to hand-enter every local comic/card/thrift shop yourself.
+// Each type queries by OSM shop tag AND by name keywords, since small independent shops are
+// inconsistently tagged on OpenStreetMap (e.g. a comic shop tagged shop=books, or a toy/collectibles
+// shop with no shop=toys tag at all). Exclusions (["name"!~"..."]) keep a store from landing in the
+// wrong bucket when it could plausibly match two types (e.g. a comic shop showing up as "Bookstore").
 const LOCAL_SHOP_TYPES = [
-  { id:'comic', label:'Comic Book Store', osmShop:'comic', categories:['cards','popculture'] },
-  { id:'games', label:'Card & Game Shop', osmShop:'games', categories:['cards','videogames'] },
-  { id:'hobby', label:'Hobby Shop', osmShop:'hobby', categories:['diecast','lego'] },
-  { id:'toys', label:'Toy Store', osmShop:'toys', categories:['diecast','lego','popculture'] },
-  { id:'books', label:'Independent Bookstore', osmShop:'books', categories:['cards','lego','popculture'] },
-  { id:'thrift', label:'Thrift / Secondhand Store', osmShop:'charity', categories:['diecast','cards','videogames','lego','popculture'] },
+  { id:'comic', label:'Comic Book Store', categories:['cards','popculture'],
+    query:(r,lat,lon)=> `nwr["shop"="comic"](around:${r},${lat},${lon});nwr["shop"]["name"~"comic",i](around:${r},${lat},${lon});` },
+  { id:'games', label:'Card & Game Shop', categories:['cards','videogames'],
+    query:(r,lat,lon)=> `nwr["shop"~"^(games|collector)$"](around:${r},${lat},${lon});nwr["shop"]["name"~"trading card|card shop|game shop|gaming",i]["name"!~"comic",i](around:${r},${lat},${lon});` },
+  { id:'hobby', label:'Hobby Shop', categories:['diecast','lego'],
+    query:(r,lat,lon)=> `nwr["shop"~"^(hobby|model)$"](around:${r},${lat},${lon});` },
+  { id:'toys', label:'Toy Store', categories:['diecast','lego','popculture'],
+    query:(r,lat,lon)=> `nwr["shop"="toys"](around:${r},${lat},${lon});nwr["shop"]["name"~"toys?|collectibles?",i]["name"!~"comic",i](around:${r},${lat},${lon});` },
+  { id:'books', label:'Independent Bookstore', categories:['cards','lego','popculture'],
+    query:(r,lat,lon)=> `nwr["shop"="books"]["name"!~"comic",i](around:${r},${lat},${lon});` },
+  { id:'thrift', label:'Thrift / Secondhand Store', categories:['diecast','cards','videogames','lego','popculture'],
+    query:(r,lat,lon)=> `nwr["shop"~"^(charity|second_hand|variety_store)$"]["name"!~"comic|toy",i](around:${r},${lat},${lon});` },
 ];
 const STREET_SUFFIXES = ['Drive','Dr','Street','St','Road','Rd','Avenue','Ave','Boulevard','Blvd','Lane','Ln','Parkway','Pkwy','Highway','Hwy','Way','Court','Ct','Circle','Cir','Trail','Trl','Place','Pl','Loop'];
 const CHAIN_DEFAULT_TAGS = {
@@ -773,12 +783,13 @@ async function searchChain(chain, groupLabel, externalSignal){
       stores.push(s); added++;
     });
     let statusText, status;
-    if(added){ statusText = `${added} found`; status = 'found'; }
-    else if(alreadyKnown){ statusText = `no new stores (${alreadyKnown} already found)`; status = 'already-known'; }
-    else { statusText = 'none found nearby'; status = 'none'; }
+    if(added){ statusText = `${added} found` + (totalMatched>added ? ` (${totalMatched} total in map data)` : ''); status = 'found'; }
+    else if(alreadyKnown){ statusText = `no new stores (${totalMatched} in map data, already found)`; status = 'already-known'; }
+    else { statusText = 'none found in map data nearby'; status = 'none'; }
+    if(rowStatus) rowStatus.title = `OpenStreetMap matched ${totalMatched} location(s) for this search. If you know of a real store this is missing, it likely isn't mapped/tagged correctly on OpenStreetMap yet — you can add it yourself at openstreetmap.org, or just add it here with Custom Store for now.`;
     if(rowStatus) rowStatus.textContent = statusText;
     save();
-    return { chain, status, added, alreadyKnown };
+    return { chain, status, added, alreadyKnown, totalMatched };
   }catch(e){
     if(e.message === 'Cancelled by user'){ if(rowStatus) rowStatus.textContent = 'cancelled'; throw e; }
     console.error('Search failed for', chain, e);
@@ -897,10 +908,10 @@ async function searchLocalShopType(shopTypeId){
   if(!center){ if(rowStatus) rowStatus.textContent='need a location'; return { chain:shopType.label, status:'no-location', added:0 }; }
   if(rowStatus) rowStatus.textContent = 'Searching…';
   const radiusMeters = Math.round(parseFloat(document.getElementById('radius').value) * 1609.34);
-  const query = `[out:json][timeout:25];(nwr["shop"="${shopType.osmShop}"](around:${radiusMeters},${center.lat},${center.lon}););out center tags;`;
+  const query = `[out:json][timeout:25];(${shopType.query(radiusMeters, center.lat, center.lon)});out center tags;`;
   try{
     const data = await overpassFetch(query);
-    let added = 0, alreadyKnown = 0;
+    let added = 0, alreadyKnown = 0, totalMatched = 0;
     (data.elements||[]).forEach(el=>{
       const lat = el.lat ?? (el.center && el.center.lat);
       const lon = el.lon ?? (el.center && el.center.lon);
@@ -908,7 +919,9 @@ async function searchLocalShopType(shopTypeId){
       const osmId = `${el.type}/${el.id}`;
       const tags = el.tags || {};
       const name = tags.name || shopType.label;
+      totalMatched++;
       if(stores.some(s=> s.osmId === osmId)){ alreadyKnown++; return; }
+      if(stores.some(s=> s.localShopType===shopTypeId && s.lat!=null && haversineMiles({lat,lon},{lat:s.lat,lon:s.lon}) < 0.07)){ alreadyKnown++; return; }
       const line1 = [tags['addr:housenumber'], tags['addr:street']].filter(Boolean).join(' ');
       const line2 = [tags['addr:city'], tags['addr:state']].filter(Boolean).join(', ');
       const address = [line1, line2, tags['addr:postcode']].filter(Boolean).join(', ') || `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
@@ -916,9 +929,12 @@ async function searchLocalShopType(shopTypeId){
       s.chain = null; s.localShopType = shopTypeId; s.address = address; s.lat = lat; s.lon = lon; s.osmId = osmId;
       stores.push(s); added++;
     });
-    if(rowStatus) rowStatus.textContent = added ? `${added} found` : (alreadyKnown ? `no new shops (${alreadyKnown} already found)` : 'none found nearby');
+    const statusText = added ? `${added} found` + (totalMatched>added ? ` (${totalMatched} total in map data)` : '')
+      : (alreadyKnown ? `no new shops (${totalMatched} in map data, already found)` : 'none found in map data nearby');
+    if(rowStatus) rowStatus.title = `OpenStreetMap matched ${totalMatched} location(s) for this search. Missing one you know exists? It likely isn't tagged correctly on OpenStreetMap yet — add it at openstreetmap.org, or add it here with Custom Store for now.`;
+    if(rowStatus) rowStatus.textContent = statusText;
     save();
-    return { chain:shopType.label, status: added?'found':(alreadyKnown?'already-known':'none'), added, alreadyKnown };
+    return { chain:shopType.label, status: added?'found':(alreadyKnown?'already-known':'none'), added, alreadyKnown, totalMatched };
   }catch(e){
     console.error('Local shop search failed for', shopType.label, e);
     if(rowStatus) rowStatus.textContent = 'search failed — try a smaller radius';
@@ -978,14 +994,22 @@ document.getElementById('huntBtn').addEventListener('click', async ()=>{
   document.getElementById('huntSpinnerOverlay').classList.add('show');
   render(); // keeps Route Details greyed out for the duration of the hunt
   const results = [];
+  let runningTotal = 0;
   let cancelled = false;
+  function updateSpinner(i, phase){
+    // Line 1: which store TYPE we're on out of how many types are checked (chains + local shop types combined)
+    // Line 2: the type's name and its own live status (searching/found count)
+    // Line 3: a running total of stores found across the whole hunt so far
+    const job = checked[i];
+    spinnerText.innerHTML = `Store Type ${i+1} of ${checked.length}<br>${esc(job.label)} — ${esc(phase)}<br>Total found this hunt: ${runningTotal}`;
+  }
   try{
     for(let i=0;i<checked.length;i++){
       if(huntAbortController.signal.aborted){ cancelled = true; break; }
       const job = checked[i];
       const label = job.label;
       btn.textContent = `Hunting… ${i+1}/${checked.length}`;
-      spinnerText.innerHTML = `Hunting<br>${esc(label)}<br>${i+1}/${checked.length}`;
+      updateSpinner(i, 'searching…');
       const runJob = ()=> job.kind==='chain'
         ? searchChain(job.chainName, job.groupLabel, huntAbortController.signal)
         : searchLocalShopType(job.shopTypeId);
@@ -993,13 +1017,17 @@ document.getElementById('huntBtn').addEventListener('click', async ()=>{
       // a failed search is often just a transient rate-limit from the free search service
       // when running several chains back to back — wait a bit and retry once automatically
       if(result && result.status === 'failed' && !huntAbortController.signal.aborted){
-        spinnerText.innerHTML = `Hunting<br>${esc(label)}<br>retrying…`;
+        updateSpinner(i, 'retrying…');
         await new Promise(r=> setTimeout(r, 4000));
         if(!huntAbortController.signal.aborted){
           result = await runJob();
         }
       }
-      if(result) results.push(result);
+      if(result){
+        runningTotal += (result.added || 0);
+        updateSpinner(i, result.added ? `${result.added} found` : (result.status==='already-known' ? 'no new stores' : (result.status==='failed' ? 'search failed' : 'none found')));
+        results.push(result);
+      }
     }
   }catch(e){
     if(e.message !== 'Cancelled by user') console.error('Hunt loop error:', e);
@@ -1015,13 +1043,13 @@ document.getElementById('huntBtn').addEventListener('click', async ()=>{
   openTabForce('route');
   if(!cancelled && results.length){
     const lines = results.map(r=>{
-      if(r.status==='found') return `✅ ${esc(r.chain)} — ${r.added} found`;
-      if(r.status==='already-known') return `🔁 ${esc(r.chain)} — no new stores (${r.alreadyKnown} already in your list)`;
-      if(r.status==='none') return `⚪ ${esc(r.chain)} — none nearby`;
+      if(r.status==='found') return `✅ ${esc(r.chain)} — ${r.added} found` + (r.totalMatched && r.totalMatched>r.added ? ` (${r.totalMatched} total in map data)` : '');
+      if(r.status==='already-known') return `🔁 ${esc(r.chain)} — no new stores (${r.totalMatched||r.alreadyKnown} in map data, already in your list)`;
+      if(r.status==='none') return `⚪ ${esc(r.chain)} — none found in map data nearby`;
       if(r.status==='failed') return `⚠️ ${esc(r.chain)} — search failed, try a smaller radius`;
       return `⚪ ${esc(r.chain)} — skipped`;
     });
-    showInfoModal(`<h2>Hunt Results</h2><p style="line-height:1.9;">${lines.join('<br>')}</p>`);
+    showInfoModal(`<h2>Hunt Results</h2><p style="line-height:1.9;">${lines.join('<br>')}</p><p class="hint-text" style="margin-top:12px;">Counts reflect what's mapped on OpenStreetMap near you, not every real-world location. Missing a store you know exists? Add it yourself at openstreetmap.org, or just enter it under Custom Store for now.</p>`);
   }
 });
 document.getElementById('cancelHuntBtn').addEventListener('click', ()=>{
@@ -1286,6 +1314,7 @@ function showProUpsell(reason){
 document.getElementById('infoModalClose').addEventListener('click', closeInfoModal);
 document.getElementById('infoModalOverlay').addEventListener('click', (e)=>{ if(e.target.id==='infoModalOverlay') closeInfoModal(); });
 const VERSION_HISTORY = [
+  { v:'v2.1-alpha', date:'Jul 20, 2026', notes:'Local shop search now matches by name keywords too (not just OSM shop tag), so stores like a comic shop tagged as a bookstore land in the right bucket. Search results show how many locations OpenStreetMap actually has nearby, to distinguish OSM data gaps from app bugs. Hunt progress overlay reworked into three clear lines (store type progress, current type status, running total found).' },
   { v:'v2.0-alpha', date:'Jul 20, 2026', notes:'Multi-category hunting (Die Cast, Trading Cards, Video Games, LEGO, Pop Culture) with category-aware store chains, item types, and independent/local shop search by type. Bigger banner. Marked ALPHA.' },
   { v:'v1.2', date:'Jul 17, 2026', notes:'Photo Save/Cancel/Replace/Remove workflow, reworked Saved Stores actions, persistent Start/End, Save/Load/Delete Route, tab-scroll fix, 5-tap admin PIN, Speedway added.' },
 ];
