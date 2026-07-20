@@ -1,6 +1,30 @@
 # Treasure Hunt Tracker 🎯
 
-A mobile-first store tracker and route planner for Hot Wheels (and Matchbox / diecast) hunting. Hosted on GitHub Pages — no accounts, no paid APIs, no backend.
+> 🧪 **Status: ALPHA.** Core hunting/routing/tracking works end-to-end, but the app is actively growing (multi-category support just landed) and things will keep shifting. See the in-app ☰ menu → Version History for the changelog.
+
+A mobile-first store tracker and route planner for collectible hunting — Die Cast, Trading Cards, Video Games, LEGO, and Pop Culture, with room to grow. Hosted on GitHub Pages — no accounts, no paid APIs, no backend.
+
+## Multi-category hunting (v2.0-alpha)
+Hunt Setup now starts with a **"What Are You Hunting For?"** dropdown (Die Cast / Trading Cards / Video Games / LEGO / Pop Culture). Changing it:
+- Auto-checks the chain stores and local shop types relevant to that category — nothing is ever hidden or deleted, so you can still hand-pick individual chains afterward.
+- Swaps the "Item Types to Track" list to that category's defaults (e.g. Silver Series/Premium/Pop Race for Die Cast vs. Pokémon TCG/Sports for Trading Cards), each with its own independently-saved custom list.
+- Updates the Hot List's example placeholder so it matches what you're collecting.
+
+**New chain stores:** Kroger (Grocery/Big Box); GameStop (Games & Hobby); Barnes & Noble and Books-A-Million (Books & Media); Five Below (Discount & Novelty); Best Buy (Electronics); Costco (Wholesale Clubs); Hot Topic, BoxLunch, and Spencer's (Pop Culture Specialty).
+
+**Independent/Local Shops:** a new section searches by OpenStreetMap shop *type* rather than brand name — Comic Book Store, Card & Game Shop, Hobby Shop, Toy Store, Independent Bookstore, and Thrift/Secondhand Store — so local spots show up without you having to list every one by name. Coverage depends entirely on how completely each shop is mapped in OpenStreetMap; if a known local store doesn't turn up, it likely just isn't tagged there yet (anyone can add it at openstreetmap.org).
+
+## On PriceCharting
+Asked and answered honestly, same as the Mattel image question below: **a client-side PriceCharting scraper isn't something this app can reliably do.** Two separate walls, either one of which is a blocker on its own:
+1. **Cross-origin restrictions.** Like Mattel's site, PriceCharting's pages aren't set up to let arbitrary browser JavaScript fetch and parse their HTML from another origin — the same technical wall documented below for images applies to price/listing data too.
+2. **Terms of use.** PriceCharting's data is their business; programmatic access is meant to go through their paid API, not scraping. Building a scraper that routes around that would violate their terms regardless of whether it worked technically.
+
+So it isn't in this build, and "scrape PriceCharting" specifically isn't a path to revisit — a *licensed* PriceCharting API key (a real, budgeted cost, which breaks the zero-cost-stack constraint this project is built around) would be the legitimate way to pull pricing data or refine category checklists, if that tradeoff is ever worth making.
+
+## On pulling images from Mattel's own website
+Asked and answered honestly: **switching the image source to Mattel's own site wouldn't actually solve the copyright concern**, so I didn't implement it. Copyright ownership is about who *created* the photo, not which website happens to display it — Mattel's product photography is exactly as copyrighted on hotwheels.com as it is on a collector site. There's also a practical wall regardless of copyright: most websites (including Mattel's) don't allow arbitrary cross-origin JavaScript to fetch their images or HTML, so a client-side app like this one can't reliably scrape either source even if it wanted to.
+
+What I did instead: the "Import 2026 Treasure Hunts" Pro feature (added last round) uses real, search-verified car *names* only — names aren't meaningfully copyrightable the way product photography is — paired with the app's own logo as a placeholder image. You can always tap that placeholder to add your own photo once you find the car. If a legitimate licensed image API ever exists for this, it'd be a clean drop-in replacement; scraping isn't the path there.
 
 ## This round's changes
 
