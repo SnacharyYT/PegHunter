@@ -14,6 +14,11 @@ Hunt Setup now starts with a **"What Are You Hunting For?"** dropdown (Die Cast 
 
 **Independent/Local Shops:** a new section searches by OpenStreetMap shop *type* rather than brand name — Comic Book Store, Card & Game Shop, Hobby Shop, Toy Store, Independent Bookstore, and Thrift/Secondhand Store — so local spots show up without you having to list every one by name. Coverage depends entirely on how completely each shop is mapped in OpenStreetMap; if a known local store doesn't turn up, it likely just isn't tagged there yet (anyone can add it at openstreetmap.org).
 
+## v2.1-alpha tweaks
+- **Local shop search broadened.** Small independent shops are inconsistently tagged on OpenStreetMap — a comic shop might be tagged `shop=books`, a toy/collectibles shop might have no specific `shop` tag at all. Each local shop type now also matches on name keywords (e.g. "toy", "collectible", "comic", "trading card") in addition to the expected tag, with exclusions so a store doesn't land in two buckets at once (a comic shop won't also show up under "Independent Bookstore").
+- **Search result counts now show what OpenStreetMap actually has**, e.g. "2 found (3 total in map data)", so it's clear when a low count is an OSM data gap rather than an app bug. If a real store you know about still doesn't show up, it likely isn't mapped/tagged on OpenStreetMap yet — you can add it yourself at openstreetmap.org, or just enter it under Custom Store as a workaround in the meantime.
+- **Hunt progress display reworked.** The loading overlay now shows three clear lines: which store type you're on (e.g. "Store Type 3 of 8"), that type's name and live status, and a running total of stores found across the whole hunt — instead of an ambiguous "X/X".
+
 ## On PriceCharting
 Asked and answered honestly, same as the Mattel image question below: **a client-side PriceCharting scraper isn't something this app can reliably do.** Two separate walls, either one of which is a blocker on its own:
 1. **Cross-origin restrictions.** Like Mattel's site, PriceCharting's pages aren't set up to let arbitrary browser JavaScript fetch and parse their HTML from another origin — the same technical wall documented below for images applies to price/listing data too.
