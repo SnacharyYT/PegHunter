@@ -29,10 +29,10 @@
 
   .checker-stripe{height:6px; background-image:repeating-linear-gradient(90deg, #000 0 10px, #f2f0ec 10px 20px); opacity:0.9;}
 
-  header{display:grid; grid-template-columns:auto 1fr auto; align-items:center; padding:28px 18px; background:var(--bg-panel);}
+  header{display:grid; grid-template-columns:auto 1fr auto; align-items:center; padding:14px 18px; background:var(--bg-panel);}
   .header-logo{height:76px; width:auto; cursor:pointer;}
-  .header-banner{max-height:76px; width:100%; height:auto; object-fit:contain; min-width:0; padding:0 10px; box-sizing:border-box;}
-  @media (max-width:380px){ .header-logo{height:58px;} .header-banner{max-height:58px;} }
+  .header-banner{max-height:152px; width:100%; height:auto; object-fit:contain; min-width:0; padding:0 10px; box-sizing:border-box;}
+  @media (max-width:380px){ .header-logo{height:58px;} .header-banner{max-height:116px;} }
   .hamburger-btn{background:none; border:1px solid #34343a; color:var(--ink); border-radius:8px; font-size:1.4rem; padding:10px 14px; cursor:pointer; line-height:1;}
 
   .menu-overlay{position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:5000; display:none;}
@@ -257,7 +257,10 @@
     <button class="btn menu-full-btn" id="bombBtn">💣 Clear All Data</button>
   </div>
 
-  <p class="app-version">v1.2 — Jul 17, 2026 · 3:00 PM</p>
+  <h2>Version</h2>
+  <p class="hint-text" style="margin-top:-4px;">🧪 <strong>ALPHA RELEASE</strong> — core features work, but expect rough edges while we build out multi-category hunting. Feedback welcome!</p>
+  <button class="btn-tiny menu-full-btn" id="versionHistoryBtn" style="text-align:center;">📜 Version History</button>
+  <p class="app-version">v2.0-alpha — Jul 20, 2026</p>
 </div>
 
 <main class="stack">
@@ -292,6 +295,13 @@
     <button class="hunt-cta-panel" id="huntBtn">🎯 HUNT!</button>
     <p class="hint-text" style="margin-top:-10px;">Finds all the stores in your area that meet the criteria below.<br>New and extensive searches can take several minutes to complete.</p>
 
+    <h3>What Are You Hunting For?</h3>
+    <div class="field">
+      <label for="huntCategorySelect">Collecting focus</label>
+      <select id="huntCategorySelect"></select>
+      <p class="hint-text" style="margin:6px 0 0;">Switching this auto-checks the store chains and item types that fit — nothing is deleted, so feel free to fine-tune the checkboxes below afterward.</p>
+    </div>
+
     <h3>Saved Hunts</h3>
     <select id="huntSelect" class="menu-select"><option value="">— saved hunts —</option></select>
     <div class="menu-btn-stack">
@@ -306,9 +316,14 @@
       <input type="range" id="radius" min="1" max="50" value="10">
     </div>
 
-    <h3>Filters</h3>
+    <h3>Chain Stores</h3>
     <p class="hint-text">Check the chains you want, then press HUNT! above. Unchecking never deletes stores you've already found.</p>
     <div id="catGroups"></div>
+
+    <h3>🏪 Independent / Local Shops</h3>
+    <p class="hint-text">Comic shops, card &amp; game stores, thrift shops and the like — searched by type, not by name, so you don't have to list every local spot yourself.</p>
+    <div id="localShopGroup" class="cat-group"></div>
+
     <div class="field">
       <label>Filter by type</label>
       <div id="typeFilterList"></div>
@@ -317,11 +332,11 @@
       <label class="plain"><input type="checkbox" id="favoritesOnly"> 🔥 Only show/route favorites</label>
     </div>
 
-    <h3>Car Types to Track</h3>
-    <p class="hint-text">Popular store types are added automatically but may not be exactly right — tap ✏️ Edit on a store after your first hunt to correct its inventory types so future filtering is accurate.</p>
+    <h3>Item Types to Track</h3>
+    <p class="hint-text">Popular store types are added automatically but may not be exactly right — tap ✏️ Edit on a store after your first hunt to correct its inventory types so future filtering is accurate. This list follows whichever hunting focus is selected above.</p>
     <div id="carTypeList"></div>
     <div class="inline-row">
-      <input type="text" id="newCarType" placeholder="e.g. Johnny Lightning">
+      <input type="text" id="newCarType" placeholder="e.g. Rookie Cards">
       <button class="btn-tiny" id="addCarTypeBtn">+ Add</button>
     </div>
 
@@ -337,7 +352,7 @@
           <option>Grocery</option><option>Dollar Store</option><option>Drug Store</option><option>Auto Parts</option><option>Other</option>
         </select>
       </div>
-      <div class="field"><label>Car types found here</label><div id="customCarTypesList"></div></div>
+      <div class="field"><label>Item types found here</label><div id="customCarTypesList"></div></div>
       <div class="field"><label>Notes</label><textarea id="customNotes" placeholder="Staff tips, best aisle, restock pattern..."></textarea></div>
       <div class="field"><label class="plain"><input type="checkbox" id="customFavorite"> 🔥 Favorite</label></div>
     </div>
@@ -400,9 +415,9 @@
   </section>
 
   <section class="tab-panel" id="panel-notes">
-    <h3>🔥 Hot List — cars you're hunting for</h3>
+    <h3>🔥 Hot List — items you're hunting for</h3>
     <div class="inline-row" style="margin-bottom:12px;">
-      <input type="text" id="newTargetName" placeholder="e.g. '67 Camaro — Super Treasure Hunt">
+      <input type="text" id="newTargetName" placeholder="e.g. '67 Camaro — Super Treasure Hunt, or a card/set/game name">
       <button class="btn-tiny" id="addTargetBtn">+ Add</button>
     </div>
     <button class="btn secondary" id="import2026Btn" style="width:100%;margin-bottom:14px;">⭐ Import 2026 Treasure Hunts (Pro)</button>
@@ -444,18 +459,84 @@ const storage = {
   set(key,val){ try{ localStorage.setItem(key,val); } catch(e){ memoryStore[key]=val; } }
 };
 
-const PRESET_GROUPS = [
-  { id:'grocery', label:'Grocery / Big Box', chains:['Walmart','Target','Albertsons'] },
-  { id:'dollar', label:'Dollar Stores', chains:['Dollar Tree','Dollar General','Family Dollar'] },
-  { id:'drug', label:'Drug Stores', chains:['CVS','Walgreens'] },
-  { id:'auto', label:'Auto Parts', chains:["O'Reilly Auto Parts",'AutoZone','Advance Auto Parts'] },
-  { id:'convenience', label:'Convenience / Gas', chains:['7-Eleven','Speedway'] },
+const HUNT_CATEGORIES = [
+  { id:'diecast', label:'🚗 Die Cast', exampleItem:"'67 Camaro — Super Treasure Hunt" },
+  { id:'cards', label:'🃏 Trading Cards', exampleItem:'2026 Panini Prizm — Silver' },
+  { id:'videogames', label:'🎮 Video Games', exampleItem:'Sealed copy — Elden Ring' },
+  { id:'lego', label:'🧱 LEGO', exampleItem:'Exclusive minifigure — Series 26' },
+  { id:'popculture', label:'🎬 Pop Culture', exampleItem:'Funko Pop! — SDCC Exclusive' },
 ];
-const DEFAULT_CAR_TYPES = ['Silver Series','Premium','Mainline','Matchbox'];
+const CATEGORY_DEFAULT_TYPES = {
+  diecast: ['Silver Series','Premium','Mainline','Matchbox','Pop Race'],
+  cards: ['Pokémon TCG','Sports (Mixed)','Baseball','Basketball','Football','Magic: The Gathering'],
+  videogames: ['New Releases','Retro / Used','Limited Editions','Trade-In Deals'],
+  lego: ['Minifigures','Exclusive / Retired Sets','Sets Under $20','Bulk / Pick-a-Brick'],
+  popculture: ['Funko Pop!','Action Figures','Statues / Collectibles','Apparel / Novelty'],
+};
+// Chain stores, tagged with which hunting categories they're relevant for.
+// Unchecking a chain never deletes stores already found there — see reEnableHunt / syncChainCheckboxes.
+const PRESET_GROUPS = [
+  { id:'grocery', label:'Grocery / Big Box', chains:[
+    { name:'Walmart', categories:['diecast','cards','videogames','lego','popculture'] },
+    { name:'Target', categories:['diecast','cards','videogames','lego','popculture'] },
+    { name:'Kroger', categories:['diecast','cards'] },
+    { name:'Albertsons', categories:['diecast','cards'] },
+  ]},
+  { id:'dollar', label:'Dollar Stores', chains:[
+    { name:'Dollar Tree', categories:['diecast','cards'] },
+    { name:'Dollar General', categories:['diecast','cards'] },
+    { name:'Family Dollar', categories:['diecast','cards'] },
+  ]},
+  { id:'drug', label:'Drug Stores', chains:[
+    { name:'CVS', categories:['diecast','cards'] },
+    { name:'Walgreens', categories:['diecast','cards'] },
+  ]},
+  { id:'auto', label:'Auto Parts', chains:[
+    { name:"O'Reilly Auto Parts", categories:['diecast'] },
+    { name:'AutoZone', categories:['diecast'] },
+    { name:'Advance Auto Parts', categories:['diecast'] },
+  ]},
+  { id:'convenience', label:'Convenience / Gas', chains:[
+    { name:'7-Eleven', categories:['diecast'] },
+    { name:'Speedway', categories:['diecast'] },
+  ]},
+  { id:'games_hobby', label:'Games & Hobby', chains:[
+    { name:'GameStop', categories:['videogames','cards','popculture'] },
+  ]},
+  { id:'books_media', label:'Books & Media', chains:[
+    { name:'Barnes & Noble', categories:['cards','lego','popculture','videogames'] },
+    { name:'Books-A-Million', categories:['cards','lego','popculture'] },
+  ]},
+  { id:'discount_dept', label:'Discount & Novelty', chains:[
+    { name:'Five Below', categories:['lego','popculture','diecast','cards'] },
+  ]},
+  { id:'electronics', label:'Electronics', chains:[
+    { name:'Best Buy', categories:['videogames'] },
+  ]},
+  { id:'wholesale', label:'Wholesale Clubs', chains:[
+    { name:'Costco', categories:['videogames','lego','popculture','diecast'] },
+  ]},
+  { id:'pop_specialty', label:'Pop Culture Specialty', chains:[
+    { name:'Hot Topic', categories:['popculture'] },
+    { name:'BoxLunch', categories:['popculture'] },
+    { name:"Spencer's", categories:['popculture'] },
+  ]},
+];
+// Independent/local shops are searched by OSM shop type, not by brand name, so you don't
+// have to hand-enter every local comic/card/thrift shop yourself.
+const LOCAL_SHOP_TYPES = [
+  { id:'comic', label:'Comic Book Store', osmShop:'comic', categories:['cards','popculture'] },
+  { id:'games', label:'Card & Game Shop', osmShop:'games', categories:['cards','videogames'] },
+  { id:'hobby', label:'Hobby Shop', osmShop:'hobby', categories:['diecast','lego'] },
+  { id:'toys', label:'Toy Store', osmShop:'toys', categories:['diecast','lego','popculture'] },
+  { id:'books', label:'Independent Bookstore', osmShop:'books', categories:['cards','lego','popculture'] },
+  { id:'thrift', label:'Thrift / Secondhand Store', osmShop:'charity', categories:['diecast','cards','videogames','lego','popculture'] },
+];
 const STREET_SUFFIXES = ['Drive','Dr','Street','St','Road','Rd','Avenue','Ave','Boulevard','Blvd','Lane','Ln','Parkway','Pkwy','Highway','Hwy','Way','Court','Ct','Circle','Cir','Trail','Trl','Place','Pl','Loop'];
 const CHAIN_DEFAULT_TAGS = {
-  'Walmart': { 'Mainline':true, 'Silver Series':true, 'Premium':true, 'Matchbox':true },
-  'Target': { 'Mainline':true, 'Silver Series':false, 'Premium':true, 'Matchbox':true },
+  'Walmart': { 'Mainline':true, 'Silver Series':true, 'Premium':true, 'Matchbox':true, 'New Releases':true, 'Funko Pop!':true },
+  'Target': { 'Mainline':true, 'Silver Series':false, 'Premium':true, 'Matchbox':true, 'New Releases':true, 'Funko Pop!':true, 'Exclusive / Retired Sets':true },
+  'Kroger': { 'Mainline':true, 'Silver Series':false, 'Premium':false, 'Matchbox':false, 'Sports (Mixed)':true },
   'Albertsons': { 'Mainline':true, 'Silver Series':false, 'Premium':false, 'Matchbox':false },
   'Dollar Tree': { 'Mainline':true, 'Silver Series':false, 'Premium':false, 'Matchbox':true },
   'Dollar General': { 'Mainline':true, 'Silver Series':false, 'Premium':false, 'Matchbox':false },
@@ -467,11 +548,34 @@ const CHAIN_DEFAULT_TAGS = {
   'Advance Auto Parts': { 'Mainline':true, 'Silver Series':false, 'Premium':true, 'Matchbox':false },
   '7-Eleven': { 'Mainline':true, 'Silver Series':false, 'Premium':false, 'Matchbox':false },
   'Speedway': { 'Mainline':false, 'Silver Series':true, 'Premium':false, 'Matchbox':false },
+  'GameStop': { 'New Releases':true, 'Retro / Used':true, 'Trade-In Deals':true, 'Funko Pop!':true, 'Pokémon TCG':true },
+  'Barnes & Noble': { 'Pokémon TCG':true, 'Magic: The Gathering':true, 'Funko Pop!':true, 'Exclusive / Retired Sets':true },
+  'Books-A-Million': { 'Pokémon TCG':true, 'Funko Pop!':true },
+  'Five Below': { 'Mainline':true, 'Funko Pop!':true, 'Sets Under $20':true, 'Sports (Mixed)':true },
+  'Best Buy': { 'New Releases':true, 'Limited Editions':true },
+  'Costco': { 'Exclusive / Retired Sets':true, 'New Releases':true, 'Statues / Collectibles':true },
+  'Hot Topic': { 'Funko Pop!':true, 'Statues / Collectibles':true, 'Apparel / Novelty':true },
+  'BoxLunch': { 'Funko Pop!':true, 'Apparel / Novelty':true },
+  "Spencer's": { 'Funko Pop!':true, 'Statues / Collectibles':true, 'Apparel / Novelty':true },
 };
 
 let stores = JSON.parse(storage.get('ph_stores') || '[]');
 let hunts = JSON.parse(storage.get('ph_hunts') || '[]');
-let carTypes = JSON.parse(storage.get('ph_cartypes') || JSON.stringify(DEFAULT_CAR_TYPES));
+let currentHuntCategory = storage.get('ph_hunt_category') || 'diecast';
+// one-time migration: the app used to track a single flat "car types" list. Fold it into
+// the Die Cast category so nobody's existing custom types disappear on upgrade.
+(function migrateLegacyCarTypes(){
+  const legacy = storage.get('ph_cartypes');
+  if(legacy && !storage.get('ph_itemtypes_diecast')){
+    storage.set('ph_itemtypes_diecast', legacy);
+  }
+})();
+function loadItemTypes(categoryId){
+  const raw = storage.get('ph_itemtypes_' + categoryId);
+  if(raw) return JSON.parse(raw);
+  return [...(CATEGORY_DEFAULT_TYPES[categoryId] || [])];
+}
+let carTypes = loadItemTypes(currentHuntCategory);
 let targets = JSON.parse(storage.get('ph_targets') || '[]');
 let searchCenter = null, lastGeocodedCenterText = null;
 let homeCoord = null;
@@ -485,7 +589,7 @@ let lightboxState = null;
 
 function save(){ storage.set('ph_stores', JSON.stringify(stores)); render(); }
 function saveHunts(){ storage.set('ph_hunts', JSON.stringify(hunts)); populateHuntSelect(); }
-function saveCarTypes(){ storage.set('ph_cartypes', JSON.stringify(carTypes)); }
+function saveCarTypes(){ storage.set('ph_itemtypes_' + currentHuntCategory, JSON.stringify(carTypes)); }
 function saveTargets(){ storage.set('ph_targets', JSON.stringify(targets)); renderTargets(); }
 function esc(str){ return (str||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
 function setCenterStatus(t){ /* location status indicator removed per user request; kept as no-op so existing calls stay safe */ }
@@ -701,10 +805,10 @@ PRESET_GROUPS.forEach(group=>{
     </div>
     <div class="chain-list">
       ${group.chains.map(chain=>`
-        <div class="chain-row" data-chain-row="${chain}">
-          <label><input type="checkbox" data-chain="${chain}" data-group-label="${group.label}"> ${chain}</label>
+        <div class="chain-row" data-chain-row="${chain.name}">
+          <label><input type="checkbox" data-chain="${chain.name}" data-group-label="${group.label}" data-hunt-categories="${chain.categories.join(',')}"> ${chain.name}</label>
           <span class="chain-status mono"></span>
-          <a class="find-link" href="#" data-manual="${chain}">manual ↗</a>
+          <a class="find-link" href="#" data-manual="${chain.name}">manual ↗</a>
         </div>`).join('')}
     </div>`;
   wrap.querySelector('.cat-head').addEventListener('click', (e)=>{
@@ -742,11 +846,111 @@ function syncCategoryMasterState(wrap){
   master.indeterminate = !allChecked && !noneChecked;
 }
 function syncChainCheckboxes(){
-  document.querySelectorAll('.cat-group').forEach(wrap=>{
+  document.querySelectorAll('#catGroups .cat-group').forEach(wrap=>{
     wrap.querySelectorAll('input[data-chain]').forEach(cb=>{ cb.checked = stores.some(s=> s.chain===cb.dataset.chain); });
     syncCategoryMasterState(wrap);
   });
 }
+
+/* ---------- independent/local shop types (searched by OSM shop tag, not brand name) ---------- */
+const localShopGroupEl = document.getElementById('localShopGroup');
+localShopGroupEl.innerHTML = `
+  <div class="cat-head">
+    <label class="cat-head-label">
+      <input type="checkbox" class="cat-select-all" id="localShopSelectAll">
+      <strong>Local Shop Types</strong>
+    </label>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <button class="mini-refresh" id="localShopRefresh" title="Search checked shop types right now">🔍</button>
+      <span class="mono toggle-arrow" style="font-size:.8rem;color:var(--ink-soft);">▸</span>
+    </div>
+  </div>
+  <div class="chain-list">
+    ${LOCAL_SHOP_TYPES.map(t=>`
+      <div class="chain-row" data-localshop-row="${t.id}">
+        <label><input type="checkbox" data-localshop="${t.id}" data-hunt-categories="${t.categories.join(',')}"> ${t.label}</label>
+        <span class="chain-status mono"></span>
+      </div>`).join('')}
+  </div>`;
+localShopGroupEl.querySelector('.cat-head').addEventListener('click', (e)=>{
+  if(e.target.closest('.mini-refresh') || e.target.closest('.cat-select-all')) return;
+  localShopGroupEl.classList.toggle('open');
+});
+localShopGroupEl.querySelector('#localShopRefresh').addEventListener('click', (e)=>{
+  e.stopPropagation();
+  localShopGroupEl.querySelectorAll('input[data-localshop]:checked').forEach(cb=> searchLocalShopType(cb.dataset.localshop));
+});
+localShopGroupEl.querySelector('#localShopSelectAll').addEventListener('click', e=> e.stopPropagation());
+localShopGroupEl.querySelector('#localShopSelectAll').addEventListener('change', (e)=>{
+  const checked = e.target.checked;
+  localShopGroupEl.querySelectorAll('input[data-localshop]').forEach(cb=> cb.checked = checked);
+  reEnableHunt();
+});
+localShopGroupEl.querySelectorAll('input[data-localshop]').forEach(cb=>{
+  cb.addEventListener('change', ()=>{ syncCategoryMasterState(localShopGroupEl); reEnableHunt(); });
+});
+
+async function searchLocalShopType(shopTypeId){
+  const shopType = LOCAL_SHOP_TYPES.find(t=> t.id===shopTypeId);
+  const center = await ensureSearchCenter();
+  const rowStatus = document.querySelector(`.chain-row[data-localshop-row="${shopTypeId}"] .chain-status`);
+  if(!center){ if(rowStatus) rowStatus.textContent='need a location'; return { chain:shopType.label, status:'no-location', added:0 }; }
+  if(rowStatus) rowStatus.textContent = 'Searching…';
+  const radiusMeters = Math.round(parseFloat(document.getElementById('radius').value) * 1609.34);
+  const query = `[out:json][timeout:25];(nwr["shop"="${shopType.osmShop}"](around:${radiusMeters},${center.lat},${center.lon}););out center tags;`;
+  try{
+    const data = await overpassFetch(query);
+    let added = 0, alreadyKnown = 0;
+    (data.elements||[]).forEach(el=>{
+      const lat = el.lat ?? (el.center && el.center.lat);
+      const lon = el.lon ?? (el.center && el.center.lon);
+      if(lat==null || lon==null) return;
+      const osmId = `${el.type}/${el.id}`;
+      const tags = el.tags || {};
+      const name = tags.name || shopType.label;
+      if(stores.some(s=> s.osmId === osmId)){ alreadyKnown++; return; }
+      const line1 = [tags['addr:housenumber'], tags['addr:street']].filter(Boolean).join(' ');
+      const line2 = [tags['addr:city'], tags['addr:state']].filter(Boolean).join(', ');
+      const address = [line1, line2, tags['addr:postcode']].filter(Boolean).join(', ') || `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+      const s = makeStore(name, shopType.label, true);
+      s.chain = null; s.localShopType = shopTypeId; s.address = address; s.lat = lat; s.lon = lon; s.osmId = osmId;
+      stores.push(s); added++;
+    });
+    if(rowStatus) rowStatus.textContent = added ? `${added} found` : (alreadyKnown ? `no new shops (${alreadyKnown} already found)` : 'none found nearby');
+    save();
+    return { chain:shopType.label, status: added?'found':(alreadyKnown?'already-known':'none'), added, alreadyKnown };
+  }catch(e){
+    console.error('Local shop search failed for', shopType.label, e);
+    if(rowStatus) rowStatus.textContent = 'search failed — try a smaller radius';
+    return { chain:shopType.label, status:'failed', added:0 };
+  }
+}
+
+/* ---------- hunting-focus category dropdown ---------- */
+const huntCategorySelectEl = document.getElementById('huntCategorySelect');
+huntCategorySelectEl.innerHTML = HUNT_CATEGORIES.map(c=> `<option value="${c.id}">${c.label}</option>`).join('');
+huntCategorySelectEl.value = currentHuntCategory;
+function applyHuntCategoryToChains(categoryId){
+  document.querySelectorAll('#catGroups input[data-chain], #localShopGroup input[data-localshop]').forEach(cb=>{
+    const cats = (cb.dataset.huntCategories || '').split(',').filter(Boolean);
+    cb.checked = cats.includes(categoryId);
+  });
+  document.querySelectorAll('#catGroups .cat-group').forEach(wrap=> syncCategoryMasterState(wrap));
+  syncCategoryMasterState(localShopGroupEl);
+}
+function switchHuntCategory(categoryId, opts){
+  opts = opts || {};
+  currentHuntCategory = categoryId;
+  storage.set('ph_hunt_category', categoryId);
+  carTypes = loadItemTypes(categoryId);
+  renderCarTypes();
+  const cat = HUNT_CATEGORIES.find(c=> c.id===categoryId);
+  document.getElementById('newTargetName').placeholder = 'e.g. ' + (cat ? cat.exampleItem : '');
+  document.getElementById('newCarType').placeholder = categoryId==='diecast' ? 'e.g. Rookie Cards' : 'Add a type to track';
+  if(!opts.skipChainSync) applyHuntCategoryToChains(categoryId);
+  reEnableHunt();
+}
+huntCategorySelectEl.addEventListener('change', ()=> switchHuntCategory(huntCategorySelectEl.value));
 
 /* ---------- HUNT! button ---------- */
 let huntInProgress = false;
@@ -754,7 +958,9 @@ let huntAbortController = null;
 document.getElementById('huntBtn').addEventListener('click', async ()=>{
   const center = await ensureSearchCenter();
   if(!center) return;
-  const checked = Array.from(document.querySelectorAll('input[data-chain]:checked'));
+  const chainJobs = Array.from(document.querySelectorAll('input[data-chain]:checked')).map(cb=> ({ kind:'chain', label:cb.dataset.chain, chainName:cb.dataset.chain, groupLabel:cb.dataset.groupLabel }));
+  const localJobs = Array.from(document.querySelectorAll('#localShopGroup input[data-localshop]:checked')).map(cb=> ({ kind:'local', label:(LOCAL_SHOP_TYPES.find(t=>t.id===cb.dataset.localshop)||{}).label || cb.dataset.localshop, shopTypeId:cb.dataset.localshop }));
+  const checked = [...chainJobs, ...localJobs];
   if(checked.length===0){ await showAlertModal('Check at least one store type first.'); return; }
 
   // clear any stale route from a previous hunt so results aren't mixed up
@@ -776,18 +982,21 @@ document.getElementById('huntBtn').addEventListener('click', async ()=>{
   try{
     for(let i=0;i<checked.length;i++){
       if(huntAbortController.signal.aborted){ cancelled = true; break; }
-      const chainName = checked[i].dataset.chain;
-      const groupLabel = checked[i].dataset.groupLabel;
+      const job = checked[i];
+      const label = job.label;
       btn.textContent = `Hunting… ${i+1}/${checked.length}`;
-      spinnerText.innerHTML = `Hunting<br>${esc(chainName)}<br>${i+1}/${checked.length}`;
-      let result = await searchChain(chainName, groupLabel, huntAbortController.signal);
+      spinnerText.innerHTML = `Hunting<br>${esc(label)}<br>${i+1}/${checked.length}`;
+      const runJob = ()=> job.kind==='chain'
+        ? searchChain(job.chainName, job.groupLabel, huntAbortController.signal)
+        : searchLocalShopType(job.shopTypeId);
+      let result = await runJob();
       // a failed search is often just a transient rate-limit from the free search service
       // when running several chains back to back — wait a bit and retry once automatically
       if(result && result.status === 'failed' && !huntAbortController.signal.aborted){
-        spinnerText.innerHTML = `Hunting<br>${esc(chainName)}<br>retrying…`;
+        spinnerText.innerHTML = `Hunting<br>${esc(label)}<br>retrying…`;
         await new Promise(r=> setTimeout(r, 4000));
         if(!huntAbortController.signal.aborted){
-          result = await searchChain(chainName, groupLabel, huntAbortController.signal);
+          result = await runJob();
         }
       }
       if(result) results.push(result);
@@ -831,7 +1040,7 @@ function populateTypeFilterList(){
   const prevChecked = getCheckedTypeFilters();
   el.innerHTML = carTypes.length
     ? carTypes.map(t=> `<label class="plain type-filter-item"><input type="checkbox" data-type-filter="${esc(t)}" ${prevChecked.includes(t)?'checked':''}> ${esc(t)}</label>`).join('')
-    : '<p class="hint-text">No car types yet — add some below.</p>';
+    : '<p class="hint-text">No item types yet — add some below.</p>';
   el.querySelectorAll('[data-type-filter]').forEach(cb=> cb.addEventListener('change', render));
 }
 function populateCustomCarTypesList(){
@@ -839,7 +1048,7 @@ function populateCustomCarTypesList(){
   if(!el) return;
   el.innerHTML = carTypes.length
     ? carTypes.map(t=> `<label class="plain type-filter-item"><input type="checkbox" data-custom-cartype="${esc(t)}"> ${esc(t)}</label>`).join('')
-    : '<p class="hint-text">No car types yet.</p>';
+    : '<p class="hint-text">No item types yet.</p>';
 }
 function renderCarTypes(){
   const el = document.getElementById('carTypeList');
@@ -1076,6 +1285,13 @@ function showProUpsell(reason){
 }
 document.getElementById('infoModalClose').addEventListener('click', closeInfoModal);
 document.getElementById('infoModalOverlay').addEventListener('click', (e)=>{ if(e.target.id==='infoModalOverlay') closeInfoModal(); });
+const VERSION_HISTORY = [
+  { v:'v2.0-alpha', date:'Jul 20, 2026', notes:'Multi-category hunting (Die Cast, Trading Cards, Video Games, LEGO, Pop Culture) with category-aware store chains, item types, and independent/local shop search by type. Bigger banner. Marked ALPHA.' },
+  { v:'v1.2', date:'Jul 17, 2026', notes:'Photo Save/Cancel/Replace/Remove workflow, reworked Saved Stores actions, persistent Start/End, Save/Load/Delete Route, tab-scroll fix, 5-tap admin PIN, Speedway added.' },
+];
+document.getElementById('versionHistoryBtn').addEventListener('click', ()=>{
+  showInfoModal(`<h2>📜 Version History</h2><ul>${VERSION_HISTORY.map(v=> `<li><strong>${esc(v.v)}</strong> — ${esc(v.date)}<br>${esc(v.notes)}</li>`).join('')}</ul>`);
+});
 document.getElementById('goProBtn').addEventListener('click', ()=>{
   closeMenu();
   showProUpsell('Get more out of your hunt with Pro.');
@@ -1115,7 +1331,7 @@ document.getElementById('importInput').addEventListener('change', (e)=>{
     let data;
     try{ data = JSON.parse(reader.result); }
     catch(err){ await showAlertModal('That file could not be read — make sure it is a JSON backup exported from this app.'); e.target.value=''; return; }
-    if(!(await showConfirmModal('Import this file? This replaces all current stores, hunts, car types, and Hot List entries on this device.'))){ e.target.value=''; return; }
+    if(!(await showConfirmModal('Import this file? This replaces all current stores, hunts, item types, and Hot List entries on this device.'))){ e.target.value=''; return; }
     if(Array.isArray(data.stores)) stores = data.stores;
     if(Array.isArray(data.hunts)) hunts = data.hunts;
     if(Array.isArray(data.carTypes)) carTypes = data.carTypes;
@@ -1248,12 +1464,15 @@ document.getElementById('saveHuntBtn').addEventListener('click', async ()=>{
   const name = await showPromptModal('Name this hunt (e.g. "Full Force Weekend" or "Quick Dollar Run"):');
   if(!name) return;
   const checkedChains = Array.from(document.querySelectorAll('input[data-chain]:checked')).map(cb=> cb.dataset.chain);
+  const checkedLocalShops = Array.from(document.querySelectorAll('#localShopGroup input[data-localshop]:checked')).map(cb=> cb.dataset.localshop);
   hunts.push({
     id:'h'+Date.now(), name,
+    huntCategory: currentHuntCategory,
     centerText: document.getElementById('centerInput').value.trim(),
     radius: document.getElementById('radius').value,
     homeAddress: document.getElementById('homeAddress').value.trim(),
     chains: checkedChains,
+    localShops: checkedLocalShops,
     typeFilters: getCheckedTypeFilters(),
     favoritesOnly: document.getElementById('favoritesOnly').checked,
     createdAt: new Date().toISOString().slice(0,10)
@@ -1272,11 +1491,15 @@ document.getElementById('loadHuntBtn').addEventListener('click', async ()=>{
   document.getElementById('favoritesOnly').checked = !!hunt.favoritesOnly;
   document.getElementById('homeAddress').dispatchEvent(new Event('change'));
   await ensureSearchCenter();
+  if(hunt.huntCategory){ huntCategorySelectEl.value = hunt.huntCategory; switchHuntCategory(hunt.huntCategory, { skipChainSync:true }); }
   populateTypeFilterList();
   document.querySelectorAll('#typeFilterList [data-type-filter]').forEach(cb=>{ cb.checked = (hunt.typeFilters||[]).includes(cb.dataset.typeFilter); });
-  document.querySelectorAll('.cat-group').forEach(g=> g.classList.add('open'));
+  document.querySelectorAll('#catGroups .cat-group').forEach(g=> g.classList.add('open'));
+  localShopGroupEl.classList.add('open');
   document.querySelectorAll('input[data-chain]').forEach(cb=>{ cb.checked = hunt.chains.includes(cb.dataset.chain); });
-  document.querySelectorAll('.cat-group').forEach(wrap=> syncCategoryMasterState(wrap));
+  document.querySelectorAll('#localShopGroup input[data-localshop]').forEach(cb=>{ cb.checked = (hunt.localShops||[]).includes(cb.dataset.localshop); });
+  document.querySelectorAll('#catGroups .cat-group').forEach(wrap=> syncCategoryMasterState(wrap));
+  syncCategoryMasterState(localShopGroupEl);
   render();
   closeMenu();
   setTab('setup');
@@ -1544,7 +1767,7 @@ function renderStoreDetail(){
       <div class="field"><label>Address</label><input type="text" id="editAddr" value="${esc(store.address)}"></div>
       <div class="field"><label>Last hunted</label><input type="date" id="editLastChecked" value="${store.lastChecked||''}"></div>
       <div class="field"><label>Next restock</label><input type="date" id="editRestock" value="${store.restockDay||''}"></div>
-      <div class="field"><label>Car types found here</label>
+      <div class="field"><label>Item types found here</label>
         ${carTypes.map(t=>`<label style="font-size:.9rem;display:flex;align-items:center;gap:8px;margin-bottom:6px;"><input type="checkbox" data-edit-cartype="${esc(t)}" ${store.carTags&&store.carTags[t]?'checked':''}> ${esc(t)}</label>`).join('')}
       </div>
       <div class="field"><label>Notes</label><textarea id="editNotes">${esc(store.notes)}</textarea></div>
@@ -1982,7 +2205,7 @@ initMap();
 migrateStores();
 populateHuntSelect();
 populateSavedRouteSelect();
-renderCarTypes();
+switchHuntCategory(currentHuntCategory, { skipChainSync:true });
 render();
 restoreLastRouteEndpoints();
 renderTargets();
