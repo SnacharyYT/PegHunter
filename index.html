@@ -216,6 +216,17 @@
   .lightbox-nav{display:flex; justify-content:space-between; align-items:center; padding:10px 14px; background:#0b0b0d;}
   .lightbox-nav button{background:var(--hunt-orange); color:#141416; border:none; border-radius:6px; padding:6px 12px; font-weight:700; cursor:pointer; font-size:0.8rem;}
   .lightbox-nav button:disabled{opacity:0.3; cursor:not-allowed;}
+
+  @keyframes tutorialPulse{ 0%,100%{ box-shadow:0 0 0 4px rgba(255,204,0,0.22), 0 0 14px rgba(255,204,0,0.4);} 50%{ box-shadow:0 0 0 9px rgba(255,204,0,0.35), 0 0 30px rgba(255,204,0,0.7);} }
+  .tutorial-highlight{ outline:3px solid var(--flame1); outline-offset:3px; border-radius:10px; animation:tutorialPulse 1.4s ease-in-out infinite; position:relative; z-index:900; scroll-margin-top:20px; scroll-margin-bottom:220px; }
+  .tutorial-bar{ position:fixed; left:0; right:0; bottom:0; background:var(--bg-panel); border-top:2px solid var(--flame2); z-index:10050; padding:14px 18px calc(14px + env(safe-area-inset-bottom, 0px)); box-shadow:0 -6px 24px rgba(0,0,0,.55); display:none; max-height:60vh; overflow-y:auto; }
+  .tutorial-bar.show{ display:block; }
+  .tutorial-bar-step{ font-family:'IBM Plex Mono',monospace; font-size:0.68rem; color:var(--flame2); text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px; }
+  .tutorial-bar h3{ margin:0 0 6px; font-family:'Anton',sans-serif; text-transform:uppercase; letter-spacing:.02em; font-size:1.05rem; color:var(--ink); }
+  .tutorial-bar p{ margin:0 0 12px; font-size:0.86rem; color:var(--ink-soft); line-height:1.45; }
+  .tutorial-bar-actions{ display:flex; gap:8px; }
+  .tutorial-bar-actions .btn{ flex:1; text-align:center; }
+  .tutorial-skip{ background:none; border:none; color:var(--ink-soft); font-size:0.74rem; text-decoration:underline; cursor:pointer; padding:10px 0 0; display:block; margin:0 auto; }
 </style>
 </head>
 <body>
@@ -239,6 +250,10 @@
     <a href="mailto:TreasureHuntTracker@gmail.com?subject=Suggestion" class="btn secondary menu-full-btn" style="text-decoration:none;">💡 Send a Suggestion</a>
   </div>
 
+  <h2>Help</h2>
+  <button class="btn menu-full-btn" id="tutorialBtn">🎓 Take the Tutorial</button>
+  <p class="hint-text" style="margin-top:-4px;">Walks you through setting up your first hunt, one step at a time.</p>
+
   <h2>Quick Guide</h2>
   <ol class="guide-list">
     <li>Set your location above the map (type it, or tap "Pick on map").</li>
@@ -260,7 +275,7 @@
   <h2>Version</h2>
   <p class="hint-text" style="margin-top:-4px;">🧪 <strong>ALPHA RELEASE</strong> — core features work, but expect rough edges while we build out multi-category hunting. Feedback welcome!</p>
   <button class="btn-tiny menu-full-btn" id="versionHistoryBtn" style="text-align:center;">📜 Version History</button>
-  <p class="app-version">v2.1-alpha — Jul 20, 2026</p>
+  <p class="app-version">v2.2-alpha — Jul 20, 2026</p>
 </div>
 
 <main class="stack">
@@ -450,6 +465,8 @@
     </div>
   </div>
 </div>
+
+<div class="tutorial-bar" id="tutorialBar"></div>
 
 <script>
 /* ---------- storage ---------- */
@@ -1314,6 +1331,7 @@ function showProUpsell(reason){
 document.getElementById('infoModalClose').addEventListener('click', closeInfoModal);
 document.getElementById('infoModalOverlay').addEventListener('click', (e)=>{ if(e.target.id==='infoModalOverlay') closeInfoModal(); });
 const VERSION_HISTORY = [
+  { v:'v2.2-alpha', date:'Jul 20, 2026', notes:'Added an in-app Tutorial (☰ menu → Take the Tutorial) that walks through setting up a first hunt one step at a time, opening the right tab and highlighting exactly what to tap or fill in.' },
   { v:'v2.1-alpha', date:'Jul 20, 2026', notes:'Local shop search now matches by name keywords too (not just OSM shop tag), so stores like a comic shop tagged as a bookstore land in the right bucket. Search results show how many locations OpenStreetMap actually has nearby, to distinguish OSM data gaps from app bugs. Hunt progress overlay reworked into three clear lines (store type progress, current type status, running total found).' },
   { v:'v2.0-alpha', date:'Jul 20, 2026', notes:'Multi-category hunting (Die Cast, Trading Cards, Video Games, LEGO, Pop Culture) with category-aware store chains, item types, and independent/local shop search by type. Bigger banner. Marked ALPHA.' },
   { v:'v1.2', date:'Jul 17, 2026', notes:'Photo Save/Cancel/Replace/Remove workflow, reworked Saved Stores actions, persistent Start/End, Save/Load/Delete Route, tab-scroll fix, 5-tap admin PIN, Speedway added.' },
@@ -1325,6 +1343,62 @@ document.getElementById('goProBtn').addEventListener('click', ()=>{
   closeMenu();
   showProUpsell('Get more out of your hunt with Pro.');
 });
+
+/* ---------- guided tutorial: walks through an example hunt setup step by step ---------- */
+const TUTORIAL_STEPS = [
+  { tab:'setup', target:'#huntCategorySelect', title:'1. Pick What You\u2019re Hunting', body:'Start here — choose Die Cast, Trading Cards, Video Games, LEGO, or Pop Culture. This auto-checks the store chains and item types that fit, without hiding anything, so you can still fine-tune by hand.' },
+  { tab:'setup', target:'.location-row', title:'2. Set Your Location', body:'Type a zip code, city, or address here and tap ✓ Set — or tap 📍 Pick on Map and tap a spot directly on the map instead.' },
+  { tab:'setup', target:'#radius', title:'3. Choose a Search Radius', body:'Drag this slider to set how far out to search. A bigger radius finds more stores, but takes longer to hunt.' },
+  { tab:'setup', target:'#catGroups', title:'4. Pick Store Chains', body:'Tap a group header (like "Grocery / Big Box") to expand it, then check the specific chains you want searched.' },
+  { tab:'setup', target:'#localShopGroup', title:'5. Include Local Shops', body:'Tap here to expand independent shop types — comic shops, card & game stores, thrift shops, and more — found by type, not by name.' },
+  { tab:'setup', target:'#carTypeList', title:'6. Track Specific Item Types', body:'Check specific types (like "Silver Series" or "Pok\u00e9mon TCG") to narrow your search and future routes down to just what you are after.' },
+  { tab:'setup', target:'#huntBtn', title:'7. Tap HUNT!', body:'This searches every checked chain and shop type near you. A big search can take a few minutes — that is normal, and you can cancel anytime.' },
+  { tab:'route', target:'#startSelect', title:'8. Set Your Start Point', body:'Once you have hunted some stores, come here to Route Details. Pick your current location, home, a specific store, or a custom address to start from.' },
+  { tab:'route', target:'#endSelect', title:'9. Set Your End Point', body:'Do the same for where the route should end — or just loop back to your start.' },
+  { tab:'route', target:'#generateRouteBtn', title:'10. Generate & Go', body:'Tap Generate Route to put your stops in an efficient order, then Open in Maps for real turn-by-turn navigation.' },
+];
+let tutorialStepIndex = 0;
+function clearTutorialHighlight(){ document.querySelectorAll('.tutorial-highlight').forEach(el=> el.classList.remove('tutorial-highlight')); }
+function showTutorialStep(){
+  clearTutorialHighlight();
+  const step = TUTORIAL_STEPS[tutorialStepIndex];
+  if(!step){ endTutorial(); return; }
+  openTabForce(step.tab); // bypasses the disabled-tab guard, since Route Details is fine to preview even with zero stores yet
+  setTimeout(()=>{
+    const el = document.querySelector(step.target);
+    if(el){
+      el.classList.add('tutorial-highlight');
+      el.scrollIntoView({ behavior:'smooth', block:'center' });
+    }
+  }, 500);
+  renderTutorialBar(step);
+}
+function renderTutorialBar(step){
+  const bar = document.getElementById('tutorialBar');
+  const isLast = tutorialStepIndex === TUTORIAL_STEPS.length - 1;
+  bar.innerHTML = `
+    <div class="tutorial-bar-step">Step ${tutorialStepIndex+1} of ${TUTORIAL_STEPS.length}</div>
+    <h3>${esc(step.title)}</h3>
+    <p>${esc(step.body)}</p>
+    <div class="tutorial-bar-actions">
+      <button class="btn small secondary" id="tutorialBackBtn" ${tutorialStepIndex===0?'disabled':''}>‹ Back</button>
+      <button class="btn small teal" id="tutorialNextBtn">${isLast ? 'Finish ✓' : 'Next ›'}</button>
+    </div>
+    <button class="tutorial-skip" id="tutorialSkipBtn">Skip tutorial</button>`;
+  bar.classList.add('show');
+  document.getElementById('tutorialBackBtn').addEventListener('click', ()=>{ tutorialStepIndex = Math.max(0, tutorialStepIndex-1); showTutorialStep(); });
+  document.getElementById('tutorialNextBtn').addEventListener('click', ()=>{
+    tutorialStepIndex++;
+    if(tutorialStepIndex >= TUTORIAL_STEPS.length) endTutorial();
+    else showTutorialStep();
+  });
+  document.getElementById('tutorialSkipBtn').addEventListener('click', endTutorial);
+}
+function startTutorial(){ closeMenu(); tutorialStepIndex = 0; showTutorialStep(); }
+function endTutorial(){ clearTutorialHighlight(); document.getElementById('tutorialBar').classList.remove('show'); }
+document.getElementById('tutorialBtn').addEventListener('click', startTutorial);
+
+
 
 /* ---------- bomb: full wipe ---------- */
 document.getElementById('bombBtn').addEventListener('click', async ()=>{
